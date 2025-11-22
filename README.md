@@ -1,6 +1,6 @@
-# VIOLET2_Communications
+# VIOLET2 Communications
 
-PocketBeagle 2 Dependencies:
+PocketBeagle 2 Setup and Dependencies:
 - Radio Conda
 - Space PC hier blocks
 - BeagleBoard-DeviceTrees https://github.com/beagleboard/Beagle
@@ -16,7 +16,7 @@ sudo ifconfig can0 up
 - CAN Receive:
 
 ``
-sudo candump -cae can0,0:0,#FFFFFFFF
+candump -cae can0,0:0,#FFFFFFFF
 ``
 
 - CAN Send:
