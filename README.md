@@ -10,6 +10,9 @@ PocketBeagle 2 Setup and Dependencies:
 
 ``
 sudo ip link set can0 type can bitrate 500000
+``
+
+``
 sudo ifconfig can0 up
 ``
 
