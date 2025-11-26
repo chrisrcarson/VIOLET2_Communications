@@ -13,6 +13,19 @@ sudo ip link set can0 type can bitrate 500000
 sudo ifconfig can0 up
 ``
 
+- CAN Interface Up:
+
+``
+sudo canup.sh
+``
+
+- CAN Interface Down:
+
+``
+sudo candown.sh
+``
+
+
 - CAN Receive:
 
 ``
