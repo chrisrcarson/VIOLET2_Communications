@@ -6,7 +6,7 @@ import subprocess
 
 # Set the UDP recieve address and port
 receive_host = "127.0.0.1"
-receive_port = 27001
+receive_port = 27003
 
 # Set the UDP server addresses and ports
 UDP_HOST = "127.0.0.1" 
