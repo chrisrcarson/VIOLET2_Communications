@@ -61,9 +61,11 @@ info = command.encode('ascii')
 AX_25Send(info)
 
 while 1:
-
-	data, addr = receive_socket.recvfrom(1024)
-	command_output = data[16:]
+	# Receive and print response as byte string over UDP
+    receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    receive_socket.bind((receive_host, receive_port))
+    data, addr = receive_socket.recvfrom(1024)
+    command_output = data[16:]
 	
-	print("Command output:")
-	print(command_output)
+    print("Command output:")
+    print(command_output)
