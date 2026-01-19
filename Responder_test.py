@@ -63,4 +63,5 @@ while 1:
 	data, addr = receive_socket.recvfrom(1024)
 	command_output = data[16:]
 	
+	print("Command output:")
 	print(command_output)

@@ -62,7 +62,15 @@ while 1:
 	data, addr = receive_socket.recvfrom(1024)
 	command = data[16:]
 
+	print("Command:")
+	print(command)
+	print()
+
 	result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+	print("Command output:")
+	print(result.stdout)
+	print()
 	info = result.stdout.encode('ascii')
 
 	AX_25Send(info)
