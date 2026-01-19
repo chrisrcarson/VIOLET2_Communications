@@ -1,6 +1,5 @@
 import socket
-import os
-import time
+from time import sleep
 import subprocess
 filename = f"Encrypted.bin"
 
@@ -46,6 +45,8 @@ def AX_25Send(Info):
 	print("AX.25 Packet Transmitted From SPC:")
 	print(AX25Packet.hex())
 	print()
+
+	sleep(1)
 
 	# push over udp
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
