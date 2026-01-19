@@ -51,6 +51,8 @@ def AX_25Send(Info):
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.sendto(AX25Packet, (UDP_HOST, UDP_PORT))
 	sock.close()
+
+	print("Pushed over UDP, returning to main function")
 	return AX25Packet
 
 while 1:
@@ -61,6 +63,8 @@ while 1:
 	command = data[16:]
 
 	result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
 	info = result.stdout.encode('ascii')
+
 	AX_25Send(info)
+
+	info = ""
