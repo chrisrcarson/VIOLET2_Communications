@@ -67,7 +67,6 @@ while 1:
 	print()
 
 	result = subprocess.run(command, shell=True, capture_output=True, text=True)
-	result.wait()
 
 	print("Command output:")
 	print(result.stdout)
