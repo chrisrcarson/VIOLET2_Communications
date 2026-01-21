@@ -56,7 +56,7 @@ def AX_25Send(Info):
 receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receive_socket.bind((receive_host, receive_port))
 
-command = "echo hello"
+command = "ls"
 info = command.encode('ascii')
 AX_25Send(info)
 
