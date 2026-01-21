@@ -10,7 +10,7 @@ receive_port = 27003
 
 # Set the UDP server addresses and ports
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = 27000
+UDP_PORT = 27001
 
 
 # 7 bytes allocated for each callsign, byte 7 for SSID in Hex
