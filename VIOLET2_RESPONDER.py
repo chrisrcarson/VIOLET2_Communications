@@ -1,7 +1,6 @@
 import socket
 from time import sleep
 import subprocess
-filename = f"Encrypted.bin"
 
 
 # Set the UDP recieve address and port
@@ -46,7 +45,7 @@ def AX_25Send(Info):
 	print(AX25Packet.hex())
 	print()
 
-	sleep(1)
+	sleep(2)
 
 	# push over udp
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
