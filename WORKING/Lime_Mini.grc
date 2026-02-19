@@ -1,6 +1,7 @@
 options:
   parameters:
     author: ''
+    catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
     comment: ''
@@ -54,7 +55,7 @@ blocks:
     gui_hint: ''
     label: '"Recieve Gain (dB)"'
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '1'
@@ -87,7 +88,7 @@ blocks:
     gui_hint: ''
     label: '"squelch"'
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '-70'
     step: '1'
@@ -108,7 +109,7 @@ blocks:
     gui_hint: ''
     label: '"Transmit Gain (dB)"'
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '1'
@@ -160,31 +161,12 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
+    en_uvec: 'True'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [328, 912.0]
-    rotation: 0
-    state: true
-- name: blocks_socket_pdu_0_0
-  id: blocks_socket_pdu
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    host: 127.0.0.1
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    mtu: '1000'
-    port: '27001'
-    tcp_no_delay: 'False'
-    type: UDP_SERVER
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [120, 1012.0]
+    coordinate: [232, 136.0]
     rotation: 0
     state: true
 - name: digital_scrambler_bb_0
@@ -202,7 +184,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [760, 1020.0]
+    coordinate: [664, 312.0]
     rotation: 0
     state: enabled
 - name: dl_freq
@@ -236,7 +218,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [312, 1028.0]
+    coordinate: [240, 340.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -283,7 +265,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1200, 956.0]
+    coordinate: [1104, 248.0]
+    rotation: 0
+    state: true
+- name: network_socket_pdu_0
+  id: network_socket_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    host: 127.0.0.1
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mtu: '1000'
+    port: '52001'
+    tcp_no_delay: 'False'
+    type: UDP_SERVER
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [48, 276.0]
     rotation: 0
     state: true
 - name: nrzs_line_coding_0
@@ -298,7 +300,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [568, 1040.0]
+    coordinate: [496, 332.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -353,6 +355,7 @@ blocks:
     minoutbuf: '0'
     name: '"Transmitted Uplink Spectrum"'
     nconnections: '1'
+    norm_window: 'False'
     showports: 'False'
     tr_chan: '0'
     tr_level: '0.0'
@@ -371,14 +374,14 @@ blocks:
     width7: '1'
     width8: '1'
     width9: '1'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-140'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1192, 1040.0]
+    coordinate: [1096, 328.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -434,12 +437,12 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1184, 1152.0]
+    coordinate: [1088, 440.0]
     rotation: 0
     state: enabled
 - name: rx_gain
@@ -490,7 +493,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 1028.0]
+    coordinate: [824, 312.0]
     rotation: 0
     state: true
 - name: tx_gain
@@ -529,10 +532,10 @@ blocks:
     state: true
 
 connections:
-- [blocks_socket_pdu_0_0, pdus, blocks_message_debug_0, print_pdu]
-- [blocks_socket_pdu_0_0, pdus, hdlc_framer_with_preamble_0, in]
 - [digital_scrambler_bb_0, '0', trxv_uplink_fsk_modulator_0, '0']
 - [hdlc_framer_with_preamble_0, '0', nrzs_line_coding_0, '0']
+- [network_socket_pdu_0, pdus, blocks_message_debug_0, print_pdu]
+- [network_socket_pdu_0, pdus, hdlc_framer_with_preamble_0, in]
 - [nrzs_line_coding_0, '0', digital_scrambler_bb_0, '0']
 - [trxv_uplink_fsk_modulator_0, '0', limesdr_sink_0, '0']
 - [trxv_uplink_fsk_modulator_0, '0', qtgui_freq_sink_x_0, '0']

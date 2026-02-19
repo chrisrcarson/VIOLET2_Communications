@@ -1,6 +1,7 @@
 options:
   parameters:
     author: ''
+    catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
     comment: ''
@@ -54,7 +55,7 @@ blocks:
     gui_hint: ''
     label: '"Recieve Gain (dB)"'
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '1'
@@ -87,7 +88,7 @@ blocks:
     gui_hint: ''
     label: '"squelch"'
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '-70'
     step: '1'
@@ -108,7 +109,7 @@ blocks:
     gui_hint: ''
     label: '"Transmit Gain (dB)"'
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '1'
@@ -247,6 +248,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
+    en_uvec: 'True'
   states:
     bus_sink: false
     bus_source: false
@@ -260,6 +262,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
+    en_uvec: 'True'
   states:
     bus_sink: false
     bus_source: false
@@ -335,7 +338,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [120, 592.0]
+    coordinate: [128, 544.0]
     rotation: 0
     state: enabled
 - name: digital_descrambler_bb_0
@@ -361,6 +364,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
+    coding: digital.DIFF_DIFFERENTIAL
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -478,7 +482,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 84.0]
+    coordinate: [8, 96.0]
     rotation: 0
     state: true
 - name: limesdr_sink_0
@@ -547,7 +551,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 236.0]
+    coordinate: [16, 172.0]
     rotation: 0
     state: true
 - name: nrzs_line_coding_0
@@ -617,6 +621,7 @@ blocks:
     minoutbuf: '0'
     name: '"Transmitted Uplink Spectrum"'
     nconnections: '1'
+    norm_window: 'False'
     showports: 'False'
     tr_chan: '0'
     tr_level: '0.0'
@@ -635,7 +640,7 @@ blocks:
     width7: '1'
     width8: '1'
     width9: '1'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-140'
   states:
@@ -697,6 +702,7 @@ blocks:
     minoutbuf: '0'
     name: RX FIN
     nconnections: '1'
+    norm_window: 'False'
     showports: 'False'
     tr_chan: '0'
     tr_level: '0.0'
@@ -715,7 +721,7 @@ blocks:
     width7: '1'
     width8: '1'
     width9: '1'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-60'
   states:
@@ -777,6 +783,7 @@ blocks:
     minoutbuf: '0'
     name: RX source
     nconnections: '1'
+    norm_window: 'False'
     showports: 'False'
     tr_chan: '0'
     tr_level: '0.0'
@@ -795,7 +802,7 @@ blocks:
     width7: '1'
     width8: '1'
     width9: '1'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-100'
   states:
@@ -858,7 +865,7 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -919,7 +926,7 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -980,7 +987,7 @@ blocks:
     showports: 'False'
     type: float
     update_time: '0.10'
-    wintype: firdes.WIN_HAMMING
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
