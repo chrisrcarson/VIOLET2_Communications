@@ -9,7 +9,7 @@ import socket
 import threading
 import time
 
-# Constants 
+# Constants
 EARTH_CALLSIGN      = "VE9CNB"
 SATELLITE_CALLSIGN  = "VE9VLT"
 DEST_SSID           = bytes.fromhex("60")
@@ -20,7 +20,7 @@ PID                 = bytes.fromhex("F0")
 AX25_HEADER_SIZE    = 16  # 6 + 1 + 6 + 1 + 1 + 1 bytes
 
 # Placeholder functions (remove once utils.py exists)
-def build_ax25_frame(source: str, destination: str, payload: bytes) -> bytes: # build a complete AX.25 frame
+def build_ax25_frame(source: str, destination: str, payload: bytes) -> bytes: # build a complete AX.25 frame.
     raise NotImplementedError("build_ax25_frame() not yet implemented in packet_utils.py")
 
 def parse_ax25_frame(frame: bytes) -> dict: # parse an AX.25 frame into its components.
@@ -41,46 +41,46 @@ def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> b
         payload
     )
 
+
 # Test 1: Frame Structure
 class TestAX25FrameStructure:
 
-    def test_frame_has_correct_header_size(self): # AX.25 frame header should be exactly 16 bytes.
+    def testFrameHasCorrectHeaderSize(self): # AX.25 frame header should be exactly 16 bytes.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert len(frame) == AX25_HEADER_SIZE + len(payload), (
             f"Expected frame length {AX25_HEADER_SIZE + len(payload)}, got {len(frame)}"
         )
 
-    def test_destination_callsign_in_frame(self): # destination callsign should appear at the start of the frame.
+    def testDestinationCallsignInFrame(self): # destination callsign should appear at the start of the frame.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert frame[:6] == SATELLITE_CALLSIGN.encode('ascii'), (
             "Destination callsign not found at expected position in frame"
         )
 
-    def test_source_callsign_in_frame(self): # source callsign should appear at bytes 7-12 of the frame.
+    def testSourceCallsignInFrame(self): # source callsign should appear at bytes 7-12 of the frame.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert frame[7:13] == EARTH_CALLSIGN.encode('ascii'), (
             "Source callsign not found at expected position in frame"
         )
 
-    def test_control_byte_correct(self): # control byte should be 0x00.
+    def testControlByteCorrect(self): # control byte should be 0x00.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert frame[14:15] == CONTROL, (
             f"Expected control byte {CONTROL.hex()}, got {frame[14:15].hex()}"
         )
 
-    def test_pid_byte_correct(self): # PID byte should be 0xF0.
+    def testPidByteCorrect(self): # PID byte should be 0xF0.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert frame[15:16] == PID, (
             f"Expected PID byte {PID.hex()}, got {frame[15:16].hex()}"
         )
 
-    def test_payload_appended_after_header(self):
-        """Payload should appear immediately after the 16-byte header."""
+    def testPayloadAppendedAfterHeader(self): # payload should appear immediately after the 16-byte header.
         payload = b"hello VIOLET2"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert frame[AX25_HEADER_SIZE:] == payload, (
@@ -91,53 +91,55 @@ class TestAX25FrameStructure:
 # Test 2: Callsign Validity
 class TestCallsignValidity:
 
-    def test_earth_callsign_is_valid_length(self): # earth station callsign should be 6 characters.
+    def testEarthCallsignIsValidLength(self): # earth station callsign should be 6 characters.
         assert len(EARTH_CALLSIGN) == 6, (
             f"Expected callsign length 6, got {len(EARTH_CALLSIGN)}"
         )
 
-    def test_satellite_callsign_is_valid_length(self): # satellite callsign should be 6 characters.
+    def testSatelliteCallsignIsValidLength(self): # satellite callsign should be 6 characters.
         assert len(SATELLITE_CALLSIGN) == 6, (
             f"Expected callsign length 6, got {len(SATELLITE_CALLSIGN)}"
         )
 
-    def test_earth_callsign_is_ascii(self): # earth station callsign should be valid ASCII.
+    def testEarthCallsignIsAscii(self): # earth station callsign should be valid ASCII.
         assert EARTH_CALLSIGN.isascii(), "Earth callsign contains non-ASCII characters"
 
-    def test_satellite_callsign_is_ascii(self): # satellite callsign should be valid ASCII.
+    def testSatelliteCallsignIsAscii(self): # satellite callsign should be valid ASCII.
         assert SATELLITE_CALLSIGN.isascii(), "Satellite callsign contains non-ASCII characters"
+
 
 # Test 3: Uplink and Downlink (will require utils.py)
 class TestUplinkDownlink:
 
-    def test_uplink_frame_conforms_to_ax25(self): # a frame sent from Earth PC to VIOLET2 OBC should conform to AX.25.
+    def testUplinkFrameConformsToAx25(self): # a frame sent from Earth PC to VIOLET2 OBC should conform to AX.25.
         payload = b"A" * 100
         frame = build_ax25_frame(EARTH_CALLSIGN, SATELLITE_CALLSIGN, payload)
         assert validate_ax25_frame(frame), "Uplink frame does not conform to AX.25 standard"
 
-    def test_downlink_frame_conforms_to_ax25(self): # a frame sent from VIOLET2 OBC to Earth PC should conform to AX.25.
+    def testDownlinkFrameConformsToAx25(self): # a frame sent from VIOLET2 OBC to Earth PC should conform to AX.25.
         payload = b"A" * 100
         frame = build_ax25_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         assert validate_ax25_frame(frame), "Downlink frame does not conform to AX.25 standard"
 
-    def test_uplink_frame_can_be_parsed(self): # a parsed uplink frame should contain the correct source and destination.
+    def testUplinkFrameCanBeParsed(self): # a parsed uplink frame should contain the correct source and destination.
         payload = b"A" * 100
         frame = build_ax25_frame(EARTH_CALLSIGN, SATELLITE_CALLSIGN, payload)
         parsed = parse_ax25_frame(frame)
         assert parsed["source"] == EARTH_CALLSIGN, "Parsed source callsign mismatch"
         assert parsed["destination"] == SATELLITE_CALLSIGN, "Parsed destination callsign mismatch"
 
-    def test_downlink_frame_can_be_parsed(self): # a parsed downlink frame should contain the correct source and destination.
+    def testDownlinkFrameCanBeParsed(self): # a parsed downlink frame should contain the correct source and destination.
         payload = b"A" * 100
         frame = build_ax25_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
         parsed = parse_ax25_frame(frame)
         assert parsed["source"] == SATELLITE_CALLSIGN, "Parsed source callsign mismatch"
         assert parsed["destination"] == EARTH_CALLSIGN, "Parsed destination callsign mismatch"
 
+
 # Test 4: Loopback Communication (no hardware)
 class TestLoopbackCommunication:
 
-    def test_frame_survives_udp_loopback(self): # a frame sent over UDP loopback should be received intact.
+    def testFrameSurvivesUdpLoopback(self): # a frame sent over UDP loopback should be received intact.
         send_host = "127.0.0.1"
         send_port = 29000
         payload = b"A" * 100
@@ -171,7 +173,7 @@ class TestLoopbackCommunication:
         assert len(received) == 1, "No frame received over UDP loopback"
         assert received[0] == frame, "Received frame does not match sent frame"
 
-    def test_payload_extractable_from_loopback_frame(self): # payload should be extractable from a frame received over UDP loopback.
+    def testPayloadExtractableFromLoopbackFrame(self): # payload should be extractable from a frame received over UDP loopback.
         send_host = "127.0.0.1"
         send_port = 29001
         payload = b"hello VIOLET2" + b"\x00" * 87  # pad to 100 bytes
