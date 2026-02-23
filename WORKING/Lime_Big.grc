@@ -45,7 +45,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1182, 86]
+    coordinate: [432, 204.0]
     rotation: 0
     state: true
 - name: rx_gain_ui
@@ -66,7 +66,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [876, 16]
+    coordinate: [280, 140.0]
     rotation: 0
     state: true
 - name: samp_rate
@@ -78,7 +78,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [352, 12.0]
+    coordinate: [552, 12.0]
     rotation: 0
     state: enabled
 - name: squelch_ui
@@ -99,7 +99,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [748, 12]
+    coordinate: [280, 12.0]
     rotation: 0
     state: true
 - name: tx_gain_ui
@@ -120,7 +120,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1025, 13]
+    coordinate: [400, 12.0]
     rotation: 0
     state: true
 - name: ul_freq_ui
@@ -135,7 +135,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1174, 15]
+    coordinate: [432, 140.0]
     rotation: 0
     state: true
 - name: analog_agc_xx_0
@@ -155,7 +155,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [781, 221]
+    coordinate: [792, 596.0]
     rotation: 0
     state: enabled
 - name: analog_quadrature_demod_cf_0
@@ -171,7 +171,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [574, 244]
+    coordinate: [584, 620.0]
     rotation: 0
     state: enabled
 - name: analog_simple_squelch_cc_0
@@ -188,7 +188,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [252, 327]
+    coordinate: [264, 700.0]
     rotation: 0
     state: enabled
 - name: baud_rate
@@ -205,7 +205,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 12.0]
+    coordinate: [88, 92.0]
     rotation: 0
     state: true
 - name: blocks_and_const_xx_0_0
@@ -222,7 +222,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [752, 588.0]
+    coordinate: [760, 964.0]
     rotation: 0
     state: enabled
 - name: blocks_char_to_float_0
@@ -239,7 +239,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [944, 588.0]
+    coordinate: [952, 964.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_0
@@ -253,7 +253,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [328, 912.0]
+    coordinate: [336, 1288.0]
     rotation: 0
     state: true
 - name: blocks_message_debug_1
@@ -267,7 +267,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1128, 752.0]
+    coordinate: [1136, 1128.0]
     rotation: 0
     state: enabled
 - name: blocks_not_xx_0_0
@@ -283,7 +283,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [672, 592.0]
+    coordinate: [680, 968.0]
     rotation: 0
     state: enabled
 - name: blocks_socket_pdu_0_0
@@ -303,29 +303,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [120, 1012.0]
+    coordinate: [128, 1388.0]
     rotation: 0
     state: true
-- name: blocks_socket_pdu_1
-  id: blocks_socket_pdu
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    host: 127.0.0.1
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    mtu: '10000'
-    port: '27000'
-    tcp_no_delay: 'False'
-    type: UDP_CLIENT
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1128, 660.0]
-    rotation: 0
-    state: enabled
 - name: digital_binary_slicer_fb_0
   id: digital_binary_slicer_fb
   parameters:
@@ -338,7 +318,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [128, 544.0]
+    coordinate: [136, 920.0]
     rotation: 0
     state: enabled
 - name: digital_descrambler_bb_0
@@ -356,7 +336,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [512, 572.0]
+    coordinate: [520, 948.0]
     rotation: 0
     state: enabled
 - name: digital_diff_decoder_bb_0
@@ -373,7 +353,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 588.0]
+    coordinate: [304, 964.0]
     rotation: 0
     state: enabled
 - name: digital_hdlc_deframer_bp_0
@@ -390,7 +370,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 692.0]
+    coordinate: [944, 1068.0]
     rotation: 0
     state: enabled
 - name: digital_scrambler_bb_0
@@ -408,7 +388,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [760, 1020.0]
+    coordinate: [768, 1396.0]
     rotation: 0
     state: enabled
 - name: digital_symbol_sync_xx_0
@@ -435,7 +415,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1216, 364.0]
+    coordinate: [1224, 740.0]
     rotation: 0
     state: enabled
 - name: dl_freq
@@ -452,7 +432,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [456, 12.0]
+    coordinate: [176, 12.0]
     rotation: 0
     state: true
 - name: hdlc_framer_with_preamble_0
@@ -469,7 +449,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [312, 1028.0]
+    coordinate: [320, 1404.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -516,7 +496,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1200, 956.0]
+    coordinate: [1200, 1308.0]
     rotation: 0
     state: true
 - name: limesdr_source_0
@@ -551,7 +531,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [16, 172.0]
+    coordinate: [24, 548.0]
+    rotation: 0
+    state: true
+- name: network_socket_pdu_0
+  id: network_socket_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    host: 127.0.0.1
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mtu: '10000'
+    port: '27000'
+    tcp_no_delay: 'False'
+    type: UDP_CLIENT
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1144, 1004.0]
     rotation: 0
     state: true
 - name: nrzs_line_coding_0
@@ -566,7 +566,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [568, 1040.0]
+    coordinate: [576, 1416.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -647,7 +647,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1192, 1040.0]
+    coordinate: [1208, 1540.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0_0
@@ -728,7 +728,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1312, 664.0]
+    coordinate: [1320, 1044.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0_0_0
@@ -809,7 +809,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [160, 416.0]
+    coordinate: [168, 788.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -870,7 +870,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1184, 1152.0]
+    coordinate: [1208, 1636.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0_0
@@ -931,7 +931,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [256, 208.0]
+    coordinate: [288, 524.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_1
@@ -992,7 +992,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1224, 528.0]
+    coordinate: [1232, 900.0]
     rotation: 0
     state: enabled
 - name: root_raised_cosine_filter_1
@@ -1015,7 +1015,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [985, 214]
+    coordinate: [992, 588.0]
     rotation: 0
     state: enabled
 - name: rx_gain
@@ -1032,7 +1032,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 12.0]
+    coordinate: [176, 108.0]
     rotation: 0
     state: true
 - name: sps
@@ -1049,7 +1049,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [264, 12.0]
+    coordinate: [88, 172.0]
     rotation: 0
     state: true
 - name: trxv_uplink_fsk_modulator_0
@@ -1066,7 +1066,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 1028.0]
+    coordinate: [928, 1404.0]
     rotation: 0
     state: true
 - name: tx_gain
@@ -1083,7 +1083,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 12.0]
+    coordinate: [176, 172.0]
     rotation: 0
     state: true
 - name: ul_freq
@@ -1100,7 +1100,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [352, 12.0]
+    coordinate: [72, 252.0]
     rotation: 0
     state: true
 
@@ -1119,7 +1119,7 @@ connections:
 - [digital_descrambler_bb_0, '0', blocks_not_xx_0_0, '0']
 - [digital_diff_decoder_bb_0, '0', digital_descrambler_bb_0, '0']
 - [digital_hdlc_deframer_bp_0, out, blocks_message_debug_1, print_pdu]
-- [digital_hdlc_deframer_bp_0, out, blocks_socket_pdu_1, pdus]
+- [digital_hdlc_deframer_bp_0, out, network_socket_pdu_0, pdus]
 - [digital_scrambler_bb_0, '0', trxv_uplink_fsk_modulator_0, '0']
 - [digital_symbol_sync_xx_0, '0', digital_binary_slicer_fb_0, '0']
 - [hdlc_framer_with_preamble_0, '0', nrzs_line_coding_0, '0']

@@ -45,7 +45,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1182, 86]
+    coordinate: [176, 172.0]
     rotation: 0
     state: true
 - name: rx_gain_ui
@@ -66,7 +66,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [876, 16]
+    coordinate: [512, 12.0]
     rotation: 0
     state: true
 - name: samp_rate
@@ -78,7 +78,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [352, 12.0]
+    coordinate: [88, 252.0]
     rotation: 0
     state: enabled
 - name: squelch_ui
@@ -99,7 +99,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [748, 12]
+    coordinate: [384, 12.0]
     rotation: 0
     state: true
 - name: tx_gain_ui
@@ -120,7 +120,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1025, 13]
+    coordinate: [656, 12.0]
     rotation: 0
     state: true
 - name: ul_freq_ui
@@ -135,7 +135,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1174, 15]
+    coordinate: [176, 108.0]
     rotation: 0
     state: true
 - name: baud_rate
@@ -152,7 +152,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 12.0]
+    coordinate: [88, 92.0]
     rotation: 0
     state: true
 - name: blocks_message_debug_0
@@ -166,7 +166,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [232, 136.0]
+    coordinate: [296, 264.0]
     rotation: 0
     state: true
 - name: digital_scrambler_bb_0
@@ -184,7 +184,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 312.0]
+    coordinate: [320, 556.0]
     rotation: 0
     state: enabled
 - name: dl_freq
@@ -201,7 +201,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [456, 12.0]
+    coordinate: [280, 12.0]
     rotation: 0
     state: true
 - name: hdlc_framer_with_preamble_0
@@ -218,7 +218,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [240, 340.0]
+    coordinate: [296, 404.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -231,7 +231,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 84.0]
+    coordinate: [8, 92.0]
     rotation: 0
     state: true
 - name: limesdr_sink_0
@@ -265,7 +265,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1104, 248.0]
+    coordinate: [600, 236.0]
     rotation: 0
     state: true
 - name: network_socket_pdu_0
@@ -285,7 +285,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [48, 276.0]
+    coordinate: [64, 404.0]
     rotation: 0
     state: true
 - name: nrzs_line_coding_0
@@ -300,7 +300,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 332.0]
+    coordinate: [320, 496.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -381,7 +381,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1096, 328.0]
+    coordinate: [600, 468.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -442,7 +442,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1088, 440.0]
+    coordinate: [600, 564.0]
     rotation: 0
     state: enabled
 - name: rx_gain
@@ -459,7 +459,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 12.0]
+    coordinate: [8, 204.0]
     rotation: 0
     state: true
 - name: sps
@@ -476,7 +476,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [264, 12.0]
+    coordinate: [88, 172.0]
     rotation: 0
     state: true
 - name: trxv_uplink_fsk_modulator_0
@@ -485,7 +485,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    maxoutbuf: ''
+    maxoutbuf: '0'
     minoutbuf: '0'
     samp_rate: samp_rate
     sps: sps
@@ -493,7 +493,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 312.0]
+    coordinate: [320, 644.0]
     rotation: 0
     state: true
 - name: tx_gain
@@ -510,7 +510,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 12.0]
+    coordinate: [8, 140.0]
     rotation: 0
     state: true
 - name: ul_freq
@@ -527,7 +527,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [352, 12.0]
+    coordinate: [176, 12.0]
     rotation: 0
     state: true
 
