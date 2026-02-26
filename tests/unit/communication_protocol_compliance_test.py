@@ -61,15 +61,15 @@ class TestAX25FrameStructure:
     def testControlByteCorrect(self): # control byte should be 0x00.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
-        assert frame[14:15] == CONTROL, (
-            f"Expected control byte {CONTROL.hex()}, got {frame[14:15].hex()}"
+        assert frame[14:15] == CONTROL_BYTE, (
+            f"Expected control byte {CONTROL_BYTE.hex()}, got {frame[14:15].hex()}"
         )
 
     def testPidByteCorrect(self): # PID byte should be 0xF0.
         payload = b"test"
         frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
-        assert frame[15:16] == PID, (
-            f"Expected PID byte {PID.hex()}, got {frame[15:16].hex()}"
+        assert frame[15:16] == PID_BYTE, (
+            f"Expected PID byte {PID_BYTE.hex()}, got {frame[15:16].hex()}"
         )
 
     def testPayloadAppendedAfterHeader(self): # payload should appear immediately after the 16-byte header.

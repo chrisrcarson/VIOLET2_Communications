@@ -53,6 +53,7 @@ def _fragment_payload(payload: bytes, max_size: int = MAX_PAYLOAD_SIZE) -> list[
 
 
 # Test 1: File Upload (will require file_transfer.py)
+@pytest.mark.skip(reason="Requires live VIOLET2 responder")
 class TestFileUpload:
 
     def testUploadCompletesSuccessfully(self, tmp_path): # a file upload from Earth PC to VIOLET2 OBC should complete successfully.
@@ -77,6 +78,7 @@ class TestFileUpload:
 
 
 # Test 2: File Download (will require file_transfer.py)
+@pytest.mark.skip(reason="Requires live VIOLET2 responder")
 class TestFileDownload:
 
     def testDownloadCompletesSuccessfully(self): # a file download from VIOLET2 OBC to Earth PC should complete successfully.
@@ -99,6 +101,7 @@ class TestFileDownload:
 
 
 # Test 3: Interruption Handling (will require file_transfer.py)
+@pytest.mark.skip(reason="Requires simulated interruption and live responder")
 class TestInterruptionHandling:
 
     def testInterruptionTriggersErrorOrRetransmission(self): # a mid-transfer interruption should produce an error or trigger retransmission.
