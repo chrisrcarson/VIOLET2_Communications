@@ -316,6 +316,13 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                 # Single packet response
                 if messageType == RESP_SINGLE:
                     fileContent = payload.decode('ascii', errors='replace')
+                    # Check if response is an error message
+                    errorKeywords = ['no such file', 'cannot open', 'error', 'permission denied', 'is a directory']
+                    isError = any(keyword in fileContent.lower() for keyword in errorKeywords)
+                    if isError:
+                        print(f"Error: {fileContent}")
+                        downloadComplete = True
+                        return False
                     with open(local_name, 'w') as f:
                         f.write(fileContent)
                     print(f"Downloaded {remote_path} -> {local_name}")
@@ -357,7 +364,14 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                         fileContent = b"".join(
                             buffer["fragments"][i] for i in range(buffer["total_pkt"])
                         ).decode('ascii', errors='replace')
-                        
+                        # Check if response is an error message
+                        errorKeywords = ['no such file', 'cannot open', 'error', 'permission denied', 'is a directory']
+                        isError = any(keyword in fileContent.lower() for keyword in errorKeywords)
+                        if isError:
+                            print(f"Error: {fileContent}")
+                            del downloadBuffer[sequenceNumber]
+                            downloadComplete = True
+                            return False
                         with open(local_name, 'w') as f:
                             f.write(fileContent)
                         print(f"Downloaded {remote_path} -> {local_name} ({totalReceived} packets)")
