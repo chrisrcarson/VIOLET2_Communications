@@ -1,4 +1,5 @@
-# Testing
-pytest==8.1.1
-pytest-cov==5.0.0
-pytest-timeout==2.3.1
+# Earth Terminal Dependencies
+
+# Command history with arrow keys support for Windows
+# (Unix/Linux/Mac have readline built-in)
+pyreadline3>=3.4.1

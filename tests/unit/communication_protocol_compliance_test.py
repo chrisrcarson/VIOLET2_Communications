@@ -1,6 +1,5 @@
 # Communication Protocol Compliance Tests
 # Associated Requirement: R-G0G-001
-
 # Verifies that AX.25 protocol is used for all communications between the
 # Earth ground station and VIOLET2, including uplink and downlink.
 
@@ -8,39 +7,32 @@ import pytest
 import socket
 import threading
 import time
+from test_utils import (
+    build_ax25_frame,
+    parse_ax25_frame,
+    validate_ax25_frame,
+    EARTH_CALLSIGN,
+    SATELLITE_CALLSIGN,
+    DEST_SSID_BYTES,
+    SRC_SSID_BYTES,
+    CONTROL_BYTE,
+    PID_BYTE,
+    AX25_HEADER_LEN,
+)
 
-# Constants
-EARTH_CALLSIGN      = "VE9CNB"
-SATELLITE_CALLSIGN  = "VE9VLT"
-DEST_SSID           = bytes.fromhex("60")
-SRC_SSID            = bytes.fromhex("E0")
-CONTROL             = bytes.fromhex("00")
-PID                 = bytes.fromhex("F0")
-
-AX25_HEADER_SIZE    = 16  # 6 + 1 + 6 + 1 + 1 + 1 bytes
-
-# Placeholder functions (remove once utils.py exists)
-def build_ax25_frame(source: str, destination: str, payload: bytes) -> bytes: # build a complete AX.25 frame.
-    raise NotImplementedError("build_ax25_frame() not yet implemented in packet_utils.py")
-
-def parse_ax25_frame(frame: bytes) -> dict: # parse an AX.25 frame into its components.
-    raise NotImplementedError("parse_ax25_frame() not yet implemented in packet_utils.py")
-
-def validate_ax25_frame(frame: bytes) -> bool: # return true if the frame conforms to AX.25 standard.
-    raise NotImplementedError("validate_ax25_frame() not yet implemented in packet_utils.py")
-
+AX25_HEADER_SIZE = AX25_HEADER_LEN  # Backward compatibility
+# No placeholder functions needed - all imports from test_utils
 # Helper: manually build a frame the same way the existing code does
 def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
     return (
         dest_callsign.encode('ascii') +
-        DEST_SSID +
+        DEST_SSID_BYTES +
         src_callsign.encode('ascii') +
-        SRC_SSID +
-        CONTROL +
-        PID +
+        SRC_SSID_BYTES +
+        CONTROL_BYTE +
+        PID_BYTE +
         payload
     )
-
 
 # Test 1: Frame Structure
 class TestAX25FrameStructure:

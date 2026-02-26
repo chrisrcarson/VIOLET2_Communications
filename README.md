@@ -1,6 +1,16 @@
 # VIOLET2 Communications
 
-PocketBeagle 2 Setup and Dependencies:
+## Python Requirements
+
+To run the Python communication scripts (e.g., EARTH.py):
+
+1. Install Python 3.7 or higher
+2. Install dependencies from the repository root:
+```bash
+pip install -r requirements.txt
+```
+
+## PocketBeagle 2 Setup and Dependencies:
 - Radio Conda
 - Space PC hier blocks
 - BeagleBoard-DeviceTrees https://github.com/beagleboard/BeagleBoard-DeviceTrees

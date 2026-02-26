@@ -1,6 +1,5 @@
 # File Transfer and Interruption Handling Tests
 # Associated Requirement: R-G0G-001
-
 # Verifies that file uploads and downloads between the Earth ground station and
 # VIOLET2 complete successfully over AX.25, including transfers requiring multiple
 # overhead passes, and that Tx/Rx interruptions are handled properly.
@@ -9,40 +8,43 @@ import pytest
 import socket
 import threading
 import time
+from test_utils import (
+    reassemble_payload,
+    EARTH_CALLSIGN,
+    SATELLITE_CALLSIGN,
+    DEST_SSID_BYTES,
+    SRC_SSID_BYTES,
+    CONTROL_BYTE,
+    PID_BYTE,
+    AX25_HEADER_LEN,
+)
 
 # Constants
-EARTH_CALLSIGN      = "VE9CNB"
-SATELLITE_CALLSIGN  = "VE9VLT"
-DEST_SSID           = bytes.fromhex("60")
-SRC_SSID            = bytes.fromhex("E0")
-CONTROL             = bytes.fromhex("00")
-PID                 = bytes.fromhex("F0")
+AX25_HEADER_SIZE = AX25_HEADER_LEN
+MAX_PAYLOAD_SIZE = 255  # max bytes per frame
 
-AX25_HEADER_SIZE    = 16
-MAX_PAYLOAD_SIZE    = 255  # max bytes per frame
+# Placeholder functions (file transfer is tested separately)
+def upload_file(filepath: str) -> bool:
+    """Upload a file from Earth PC to VIOLET2 OBC."""
+    raise NotImplementedError("upload_file() integration test - requires live VIOLET2 responder")
 
-# Placeholder functions (remove once packet_utils.py and file_transfer.py exist)
-def upload_file(filepath: str) -> bool: # upload a file from Earth PC to VIOLET2 OBC.
-    raise NotImplementedError("upload_file() not yet implemented in file_transfer.py")
+def download_file(filename: str) -> bytes:
+    """Download a file from VIOLET2 OBC to Earth PC."""
+    raise NotImplementedError("download_file() integration test - requires live VIOLET2 responder")
 
-def download_file(filename: str) -> bytes: # download a file from VIOLET2 OBC to Earth PC.
-    raise NotImplementedError("download_file() not yet implemented in file_transfer.py")
-
-def handle_interruption(transfer_id: str) -> bool: # handle a Tx/Rx interruption and attempt retransmission.
-    raise NotImplementedError("handle_interruption() not yet implemented in file_transfer.py")
-
-def reassemble_payload(fragments: list[bytes]) -> bytes: # reassemble a list of fragments into the original payload.
-    raise NotImplementedError("reassemble_payload() not yet implemented in packet_utils.py")
+def handle_interruption(transfer_id: str) -> bool:
+    """Handle a Tx/Rx interruption and attempt retransmission."""
+    raise NotImplementedError("handle_interruption() integration test - requires simulated interruption")
 
 # Helper: manually build a frame the same way existing code does
 def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
     return (
         dest_callsign.encode('ascii') +
-        DEST_SSID +
+        DEST_SSID_BYTES +
         src_callsign.encode('ascii') +
-        SRC_SSID +
-        CONTROL +
-        PID +
+        SRC_SSID_BYTES +
+        CONTROL_BYTE +
+        PID_BYTE +
         payload
     )
 

@@ -1,91 +1,84 @@
-#Payload Packet Size Tests
-#Associated Requirement: R-G0G-003
+# Payload Packet Size Tests
+# Associated Requirement: R-G0G-003
+# Verifies that AX.25 packet payload per frame is within the VIOLET2 min/max sizes,
+# and that payloads above max are fragmented and reassembled correctly.
 
-#Verifies that AX.25 packet payload per frame is 100 bytes or more and less than 256 bytes,
-#and that payloads of 256 bytes or more are fragmented and reassembled correctly.
-
-#NOTE: waiting on implementation for functions such as: pad_payload(), validate_payload(), and fragment_payload().
-
-# Import(s)
 import pytest
+from test_utils import (
+    pad_payload,
+    validate_payload,
+    fragment_payload,
+    VIOLET2_MIN_APP_DATA,
+    VIOLET2_MAX_APP_DATA,
+)
 
-# Constants
-MIN_PAYLOAD_SIZE = 100
-MAX_PAYLOAD_SIZE = 256  # 256 and above triggers fragmentation
+# Constants (mirrored from test_utils for backward compatibility)
+MIN_PAYLOAD_SIZE = VIOLET2_MIN_APP_DATA
+MAX_PAYLOAD_SIZE = VIOLET2_MAX_APP_DATA
 
-# Placeholder functions (until utils.py exists)
-def pad_payload(payload: bytes) -> bytes: # pad payload to MIN_PAYLOAD_SIZE if below minimum.
-    raise NotImplementedError("pad_payload() not yet implemented in packet_utils.py")
-
-def validate_payload(payload: bytes) -> bool: # return true if payload is within valid size range. 
-    raise NotImplementedError("validate_payload() not yet implemented in packet_utils.py")
-
-def fragment_payload(payload: bytes) -> list[bytes]: # fragment payload into chunks each below MAX_PAYLOAD_SIZE
-    raise NotImplementedError("fragment_payload() not yet implemented in packet_utils.py")
-
-# Test 1: below minimum payload size (99 bytes)
+# Test 1: below minimum payload size
 class TestBelowMinimumPayload:
 
-    def test_payload_below_minimum_is_padded(self): # a payload below 100 bytes should be padded up to 100 bytes.
-        payload = b"A" * 99
+    def test_payload_below_minimum_is_padded(self): # a payload below MIN should be padded up to MIN.
+        payload = b"A" * (MIN_PAYLOAD_SIZE - 1)
         padded = pad_payload(payload)
         assert len(padded) >= MIN_PAYLOAD_SIZE, (
             f"Expected padded payload to be at least {MIN_PAYLOAD_SIZE} bytes, got {len(padded)}"
         )
 
-    def test_payload_below_minimum_fails_validation(self): # a payload below 100 bytes should fail validation."""
-        payload = b"A" * 99
+    def test_payload_below_minimum_fails_validation(self): # a payload below MIN should fail validation.
+        payload = b"A" * (MIN_PAYLOAD_SIZE - 1)
         assert not validate_payload(payload), (
             "Expected validate_payload() to return False for payload below minimum size"
         )
 
-# Test 2: at minimum payload size (100 bytes)
+# Test 2: at minimum payload size
 class TestAtMinimumPayload:
 
-    def test_payload_at_minimum_passes_validation(self): # a payload of exactly 100 bytes should pass validation.
-        payload = b"A" * 100
+    def test_payload_at_minimum_passes_validation(self): # a payload of exactly MIN should pass validation.
+        payload = b"A" * MIN_PAYLOAD_SIZE
         assert validate_payload(payload), (
             "Expected validate_payload() to return True for payload at minimum size"
         )
 
-    def test_payload_at_minimum_is_not_fragmented(self): # a payload of exactly 100 bytes should not be fragmented."""
-        payload = b"A" * 100
+    def test_payload_at_minimum_is_not_fragmented(self): # a payload of exactly MIN should not be fragmented.
+        payload = b"A" * MIN_PAYLOAD_SIZE
         fragments = fragment_payload(payload)
         assert len(fragments) == 1, (
             f"Expected 1 fragment for minimum size payload, got {len(fragments)}"
         )
 
-# Test 3: At maximum payload size (255 bytes)
+# Test 3: At maximum payload size
 class TestAtMaximumPayload:
 
-    def test_payload_at_maximum_passes_validation(self): # a payload of exactly 255 bytes should pass validation."""
-        payload = b"A" * 255
+    def test_payload_at_maximum_passes_validation(self): # a payload of exactly MAX should pass validation.
+        payload = b"A" * MAX_PAYLOAD_SIZE
         assert validate_payload(payload), (
             "Expected validate_payload() to return True for payload at maximum size"
         )
 
-    def test_payload_at_maximum_is_not_fragmented(self): # a payload of 255 bytes should not be fragmented."""
-        payload = b"A" * 255
+    def test_payload_at_maximum_is_not_fragmented(self): # a payload of exactly MAX should not be fragmented.
+        payload = b"A" * MAX_PAYLOAD_SIZE
         fragments = fragment_payload(payload)
         assert len(fragments) == 1, (
             f"Expected 1 fragment for maximum size payload, got {len(fragments)}"
         )
 
-# Test 4: Above maximum payload size (256+ bytes)
+# Test 4: Above maximum payload size
 class TestAboveMaximumPayload:
 
-    def test_payload_above_maximum_is_fragmented(self): # a payload of 256 bytes or more should be fragmented into valid chunks."""
-        payload = b"A" * 256
+    def test_payload_above_maximum_is_fragmented(self): # a payload above MAX should be fragmented into valid chunks.
+        payload = b"A" * (MAX_PAYLOAD_SIZE + 1)
         fragments = fragment_payload(payload)
         assert len(fragments) > 1, (
             "Expected payload of 256 bytes to be split into multiple fragments"
         )
 
-    def test_all_fragments_below_maximum_size(self): # each fragment should be below 256 bytes."""
-        payload = b"A" * 512
+    def test_all_fragments_below_maximum_size(self): # each fragment should be at most MAX.
+        payload = b"A" * (MAX_PAYLOAD_SIZE * 2 + 16)
         fragments = fragment_payload(payload)
         for i, fragment in enumerate(fragments):
-            assert len(fragment) < MAX_PAYLOAD_SIZE, (
+            assert len(fragment) <= MAX_PAYLOAD_SIZE, (
                 f"Fragment {i} exceeds maximum size: {len(fragment)} bytes"
             )
 
@@ -97,8 +90,8 @@ class TestAboveMaximumPayload:
             "Reassembled payload does not match original"
         )
 
-    def test_large_payload_above_maximum_fails_validation(self): # a payload of 256 bytes or more should fail single-frame validation."""
-        payload = b"A" * 256
+    def test_large_payload_above_maximum_fails_validation(self): # a payload above MAX should fail single-frame validation.
+        payload = b"A" * (MAX_PAYLOAD_SIZE + 1)
         assert not validate_payload(payload), (
             "Expected validate_payload() to return False for payload of 256 bytes or more"
         )
