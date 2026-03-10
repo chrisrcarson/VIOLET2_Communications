@@ -10,6 +10,16 @@ The RF link is handled by **GNU Radio** running on each computer alongside two *
 [EARTH.py] <--UDP--> [Lime_Big.grc / GNU Radio] <--RF--> [Lime_Mini.grc / GNU Radio] <--UDP--> [VIOLET2.py]
 ```
 
+## Python Requirements
+
+To run the Python communication scripts (e.g., EARTH.py):
+
+1. Install Python 3.7 or higher
+2. Install dependencies from the repository root:
+```bash
+pip install -r requirements.txt
+```
+
 ## Protocol Stack
 
 ### Layer 1: AX.25
@@ -164,16 +174,6 @@ python -m pytest tests/unit/ -v
 ```
 
 > Note: To write a hardware test, place it in `tests/hardware/`, import from `violet2_utils` or `earth_utils` directly, and decorate the class or file with `@pytest.mark.hardware`.
-
-## Python Requirements
-
-To run the Python communication scripts (e.g., EARTH.py):
-
-1. Install Python 3.7 or higher
-2. Install dependencies from the repository root:
-```bash
-pip install -r requirements.txt
-```
 
 ## PocketBeagle 2 Setup and Dependencies:
 - Radio Conda
