@@ -21,8 +21,8 @@ from test_utils import (
 )
 
 AX25_HEADER_SIZE = AX25_HEADER_LEN  # Backward compatibility
-# No placeholder functions needed - all imports from test_utils
-# Helper: manually build a frame the same way the existing code does
+
+# Manually build a frame the same way the existing code does
 def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
     return (
         dest_callsign.encode('ascii') +

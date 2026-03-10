@@ -1,0 +1,4 @@
+VIOLET2 uplink test payload v1.0
+Mission: VIOLET2 CubeSat
+Source:  VE9CNB (Earth)
+Dest:    VE9VLT

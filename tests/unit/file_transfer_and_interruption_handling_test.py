@@ -4,6 +4,8 @@
 # VIOLET2 complete successfully over AX.25, including transfers requiring multiple
 # overhead passes, and that Tx/Rx interruptions are handled properly.
 
+import pathlib
+
 import pytest
 import socket
 import threading
@@ -23,18 +25,21 @@ from test_utils import (
 AX25_HEADER_SIZE = AX25_HEADER_LEN
 MAX_PAYLOAD_SIZE = 255  # max bytes per frame
 
+# Pre-built fixture files used by the integration tests below.
+TESTDATA_DIR = pathlib.Path(__file__).parent.parent / "test_data"
+
 # Placeholder functions (file transfer is tested separately)
-def upload_file(filepath: str) -> bool:
-    """Upload a file from Earth PC to VIOLET2 OBC."""
-    raise NotImplementedError("upload_file() integration test - requires live VIOLET2 responder")
+# Upload a file from Earth PC to VIOLET2 OBC.
+def uploadData(filepath: str) -> bool:
+    raise NotImplementedError("uploadData() integration test - requires live VIOLET2 responder")
 
-def download_file(filename: str) -> bytes:
-    """Download a file from VIOLET2 OBC to Earth PC."""
-    raise NotImplementedError("download_file() integration test - requires live VIOLET2 responder")
+# Download a file from VIOLET2 OBC to Earth PC.
+def downloadFile(filename: str) -> bytes:
+    raise NotImplementedError("downloadFile() integration test - requires live VIOLET2 responder")
 
-def handle_interruption(transfer_id: str) -> bool:
-    """Handle a Tx/Rx interruption and attempt retransmission."""
-    raise NotImplementedError("handle_interruption() integration test - requires simulated interruption")
+# Handle a Tx/Rx interruption and attempt retransmission.
+def handleInterruption(transfer_id: str) -> bool:
+    raise NotImplementedError("handleInterruption() integration test - requires simulated interruption")
 
 # Helper: manually build a frame the same way existing code does
 def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
@@ -56,16 +61,19 @@ def _fragment_payload(payload: bytes, max_size: int = MAX_PAYLOAD_SIZE) -> list[
 @pytest.mark.skip(reason="Requires live VIOLET2 responder")
 class TestFileUpload:
 
-    def testUploadCompletesSuccessfully(self, tmp_path): # a file upload from Earth PC to VIOLET2 OBC should complete successfully.
-        test_file = tmp_path / "upload_test.txt"
-        test_file.write_bytes(b"A" * 100)
-        result = upload_file(str(test_file))
-        assert result is True, "Expected upload_file() to return True on success"
+    def testUploadCompletesSuccessfully(self): # a file upload from Earth PC to VIOLET2 OBC should complete successfully.
+        test_file = TESTDATA_DIR / "upload_test.txt"
+        assert test_file.exists(), f"Fixture file not found: {test_file}"
+        result = uploadData(str(test_file))
+        assert result is True, "Expected uploadData() to return True on success"
 
-    def testUploadLargeFileRequiresMultiplePasses(self, tmp_path): # a file larger than 255 bytes should require multiple overhead passes.
-        test_file = tmp_path / "large_upload_test.txt"
-        test_file.write_bytes(b"A" * 1024)
-        result = upload_file(str(test_file))
+    def testUploadLargeFileRequiresMultiplePasses(self): # a file larger than 255 bytes should require multiple overhead passes.
+        test_file = TESTDATA_DIR / "large_upload_test.txt"
+        assert test_file.exists(), f"Fixture file not found: {test_file}"
+        assert test_file.stat().st_size > MAX_PAYLOAD_SIZE, (
+            f"Fixture file must exceed {MAX_PAYLOAD_SIZE} bytes to require multiple passes"
+        )
+        result = uploadData(str(test_file))
         assert result is True, "Expected large file upload to complete successfully"
 
     def testUploadFileIsFragmentedCorrectly(self, tmp_path): # a file larger than 255 bytes should be fragmented into valid frames.
@@ -82,15 +90,15 @@ class TestFileUpload:
 class TestFileDownload:
 
     def testDownloadCompletesSuccessfully(self): # a file download from VIOLET2 OBC to Earth PC should complete successfully.
-        result = download_file("test_file.txt")
-        assert result is not None, "Expected download_file() to return file contents"
+        result = downloadFile("test_file.txt")
+        assert result is not None, "Expected downloadFile() to return file contents"
 
-    def testDownloadedFileMatchesOriginal(self, tmp_path): # downloaded file contents should match what was originally uploaded.
-        original = b"A" * 100
-        test_file = tmp_path / "roundtrip_test.txt"
-        test_file.write_bytes(original)
-        upload_file(str(test_file))
-        downloaded = download_file("roundtrip_test.txt")
+    def testDownloadedFileMatchesOriginal(self): # downloaded file contents should match what was originally uploaded.
+        test_file = TESTDATA_DIR / "roundtrip_test.txt"
+        assert test_file.exists(), f"Fixture file not found: {test_file}"
+        original = test_file.read_bytes()
+        uploadData(str(test_file))
+        downloaded = downloadFile("roundtrip_test.txt")
         assert downloaded == original, "Downloaded file contents do not match original"
 
     def testLargeDownloadReassemblesCorrectly(self): # a large file downloaded in multiple fragments should reassemble correctly.
@@ -105,16 +113,16 @@ class TestFileDownload:
 class TestInterruptionHandling:
 
     def testInterruptionTriggersErrorOrRetransmission(self): # a mid-transfer interruption should produce an error or trigger retransmission.
-        result = handle_interruption("transfer_001")
+        result = handleInterruption("transfer_001")
         assert result is not None, (
-            "Expected handle_interruption() to return a result indicating error or retry"
+            "Expected handleInterruption() to return a result indicating error or retry"
         )
 
-    def testTransferCompletesAfterInterruption(self, tmp_path): # a transfer should complete successfully after recovering from an interruption.
-        test_file = tmp_path / "interrupted_transfer.txt"
-        test_file.write_bytes(b"A" * 512)
-        handle_interruption("transfer_001")
-        result = upload_file(str(test_file))
+    def testTransferCompletesAfterInterruption(self): # a transfer should complete successfully after recovering from an interruption.
+        test_file = TESTDATA_DIR / "interrupted_transfer.txt"
+        assert test_file.exists(), f"Fixture file not found: {test_file}"
+        handleInterruption("transfer_001")
+        result = uploadData(str(test_file))
         assert result is True, "Expected transfer to complete successfully after interruption"
 
 

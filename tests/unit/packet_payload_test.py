@@ -82,7 +82,7 @@ class TestAboveMaximumPayload:
                 f"Fragment {i} exceeds maximum size: {len(fragment)} bytes"
             )
 
-    def test_fragments_reassemble_correctly(self): # reassembled fragments should equal the original payload."""
+    def test_fragments_reassemble_correctly(self): # reassembled fragments should equal the original payload.
         payload = b"A" * 512
         fragments = fragment_payload(payload)
         reassembled = b"".join(fragments)
