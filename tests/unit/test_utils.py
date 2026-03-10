@@ -1,5 +1,4 @@
 from earth_utils import (
-    # VIOLET2 protocol utilities
     _violet2Checksum,
     _buildViolet2Header,
     _padApplicationData,
@@ -7,7 +6,6 @@ from earth_utils import (
     parseViolet2Response,
     violet2ProtocolBuilder,
     ax25Send as ax25_send_earth,
-    # Constants
     VIOLET2_HEADER_LEN,
     VIOLET2_MIN_APP_DATA,
     VIOLET2_MAX_APP_DATA,

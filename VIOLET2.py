@@ -1,6 +1,7 @@
 import socket
 import subprocess
 from violet2_utils import *
+from violet2_utils import _buildViolet2Header, _padApplicationData
 
 # fragment reassembly buffer, keyed by seq_num
 reassemblyBuffer = {}
@@ -60,6 +61,19 @@ try:
                 del reassemblyBuffer[sequenceNumber] # clean up buffer once reassembled
             else:
                 continue
+
+        elif messageType == MSG_PING: # ping request, respond immediately with a pong
+            print(f"[VIOLET2]: ping received, sending pong")
+            pongPayload = parsed["payload"]
+            pongHeader = _buildViolet2Header(
+                messageType=MSG_PONG,
+                sequenceNumber=sequenceNumber,
+                totalPackets=1,
+                packetIndex=0,
+                payloadLength=len(pongPayload),
+            )
+            ax25Send(pongHeader + _padApplicationData(pongPayload))
+            continue
 
         else:
             print(f"[VIOLET2]: unhandled message type 0x{messageType:02X}")
