@@ -11,7 +11,7 @@ import socket
 import threading
 import time
 from test_utils import (
-    reassemble_payload,
+    reassemblePayload,
     EARTH_CALLSIGN,
     SATELLITE_CALLSIGN,
     DEST_SSID_BYTES,
@@ -21,28 +21,25 @@ from test_utils import (
     AX25_HEADER_LEN,
 )
 
-# Constants
 AX25_HEADER_SIZE = AX25_HEADER_LEN
 MAX_PAYLOAD_SIZE = 255  # max bytes per frame
 
-# Pre-built fixture files used by the integration tests below.
 TESTDATA_DIR = pathlib.Path(__file__).parent.parent / "test_data"
 
-# Placeholder functions (file transfer is tested separately)
-# Upload a file from Earth PC to VIOLET2 OBC.
+# upload a file from Earth PC to VIOLET2 OBC.
 def uploadData(filepath: str) -> bool:
     raise NotImplementedError("uploadData() integration test - requires live VIOLET2 responder")
 
-# Download a file from VIOLET2 OBC to Earth PC.
+# download a file from VIOLET2 OBC to Earth PC.
 def downloadFile(filename: str) -> bytes:
     raise NotImplementedError("downloadFile() integration test - requires live VIOLET2 responder")
 
-# Handle a Tx/Rx interruption and attempt retransmission.
+# handle a Tx/Rx interruption and attempt retransmission.
 def handleInterruption(transfer_id: str) -> bool:
     raise NotImplementedError("handleInterruption() integration test - requires simulated interruption")
 
-# Helper: manually build a frame the same way existing code does
-def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
+# manually build a frame the same way existing code does
+def _buildRawFrame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
     return (
         dest_callsign.encode('ascii') +
         DEST_SSID_BYTES +
@@ -53,32 +50,34 @@ def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> b
         payload
     )
 
-def _fragment_payload(payload: bytes, max_size: int = MAX_PAYLOAD_SIZE) -> list[bytes]: # split payload into chunks of max_size.
+def _fragmentPayload(payload: bytes, max_size: int = MAX_PAYLOAD_SIZE) -> list[bytes]: # split payload into chunks of max_size.
     return [payload[i:i+max_size] for i in range(0, len(payload), max_size)]
-
 
 # Test 1: File Upload (will require file_transfer.py)
 @pytest.mark.skip(reason="Requires live VIOLET2 responder")
 class TestFileUpload:
 
-    def testUploadCompletesSuccessfully(self): # a file upload from Earth PC to VIOLET2 OBC should complete successfully.
-        test_file = TESTDATA_DIR / "upload_test.txt"
-        assert test_file.exists(), f"Fixture file not found: {test_file}"
-        result = uploadData(str(test_file))
+    # a file upload from Earth PC to VIOLET2 OBC should complete successfully.
+    def testUploadCompletesSuccessfully(self): 
+        testFile = TESTDATA_DIR / "upload_test.txt"
+        assert testFile.exists(), f"Data file not found: {testFile}"
+        result = uploadData(str(testFile))
         assert result is True, "Expected uploadData() to return True on success"
 
-    def testUploadLargeFileRequiresMultiplePasses(self): # a file larger than 255 bytes should require multiple overhead passes.
-        test_file = TESTDATA_DIR / "large_upload_test.txt"
-        assert test_file.exists(), f"Fixture file not found: {test_file}"
-        assert test_file.stat().st_size > MAX_PAYLOAD_SIZE, (
-            f"Fixture file must exceed {MAX_PAYLOAD_SIZE} bytes to require multiple passes"
+    # a file larger than 255 bytes should require multiple overhead passes.
+    def testUploadLargeFileRequiresMultiplePasses(self):
+        testFile = TESTDATA_DIR / "large_upload_test.txt"
+        assert testFile.exists(), f"Data file not found: {testFile}"
+        assert testFile.stat().st_size > MAX_PAYLOAD_SIZE, (
+            f"Data file must exceed {MAX_PAYLOAD_SIZE} bytes to require multiple passes"
         )
-        result = uploadData(str(test_file))
+        result = uploadData(str(testFile))
         assert result is True, "Expected large file upload to complete successfully"
 
-    def testUploadFileIsFragmentedCorrectly(self, tmp_path): # a file larger than 255 bytes should be fragmented into valid frames.
+    # a file larger than 255 bytes should be fragmented into valid frames.
+    def testUploadFileIsFragmentedCorrectly(self): 
         payload = b"A" * 1024
-        fragments = _fragment_payload(payload)
+        fragments = _fragmentPayload(payload)
         for i, fragment in enumerate(fragments):
             assert len(fragment) <= MAX_PAYLOAD_SIZE, (
                 f"Fragment {i} exceeds maximum frame payload size: {len(fragment)} bytes"
@@ -89,22 +88,25 @@ class TestFileUpload:
 @pytest.mark.skip(reason="Requires live VIOLET2 responder")
 class TestFileDownload:
 
-    def testDownloadCompletesSuccessfully(self): # a file download from VIOLET2 OBC to Earth PC should complete successfully.
-        result = downloadFile("test_file.txt")
+    # a file download from VIOLET2 OBC to Earth PC should complete successfully.
+    def testDownloadCompletesSuccessfully(self): 
+        result = downloadFile("testFile.txt")
         assert result is not None, "Expected downloadFile() to return file contents"
 
-    def testDownloadedFileMatchesOriginal(self): # downloaded file contents should match what was originally uploaded.
-        test_file = TESTDATA_DIR / "roundtrip_test.txt"
-        assert test_file.exists(), f"Fixture file not found: {test_file}"
-        original = test_file.read_bytes()
-        uploadData(str(test_file))
+    # downloaded file contents should match what was originally uploaded.
+    def testDownloadedFileMatchesOriginal(self): 
+        testFile = TESTDATA_DIR / "roundtrip_test.txt"
+        assert testFile.exists(), f"Data file not found: {testFile}"
+        original = testFile.read_bytes()
+        uploadData(str(testFile))
         downloaded = downloadFile("roundtrip_test.txt")
         assert downloaded == original, "Downloaded file contents do not match original"
 
-    def testLargeDownloadReassemblesCorrectly(self): # a large file downloaded in multiple fragments should reassemble correctly.
+    # a large file downloaded in multiple fragments should reassemble correctly.
+    def testLargeDownloadReassemblesCorrectly(self): 
         original = b"A" * 1024
-        fragments = _fragment_payload(original)
-        reassembled = reassemble_payload(fragments)
+        fragments = _fragmentPayload(original)
+        reassembled = reassemblePayload(fragments)
         assert reassembled == original, "Reassembled download does not match original file"
 
 
@@ -112,31 +114,34 @@ class TestFileDownload:
 @pytest.mark.skip(reason="Requires simulated interruption and live responder")
 class TestInterruptionHandling:
 
-    def testInterruptionTriggersErrorOrRetransmission(self): # a mid-transfer interruption should produce an error or trigger retransmission.
+    # a mid-transfer interruption should produce an error or trigger retransmission.
+    def testInterruptionTriggersErrorOrRetransmission(self): 
         result = handleInterruption("transfer_001")
         assert result is not None, (
             "Expected handleInterruption() to return a result indicating error or retry"
         )
 
-    def testTransferCompletesAfterInterruption(self): # a transfer should complete successfully after recovering from an interruption.
-        test_file = TESTDATA_DIR / "interrupted_transfer.txt"
-        assert test_file.exists(), f"Fixture file not found: {test_file}"
+    # a transfer should complete successfully after recovering from an interruption.
+    def testTransferCompletesAfterInterruption(self): 
+        testFile = TESTDATA_DIR / "interrupted_transfer.txt"
+        assert testFile.exists(), f"Data file not found: {testFile}"
         handleInterruption("transfer_001")
-        result = uploadData(str(test_file))
+        result = uploadData(str(testFile))
         assert result is True, "Expected transfer to complete successfully after interruption"
 
 
 # Test 4: Loopback Multi-Pass Transfer
 class TestLoopbackMultiPassTransfer:
 
-    def testMultiFragmentTransferOverLoopback(self): # multiple fragments should all be received correctly over UDP loopback.
-        send_host = "127.0.0.1"
-        send_port = 29002
+    # multiple fragments should all be received correctly over UDP loopback.
+    def testMultiFragmentTransferOverLoopback(self): 
+        sendHost = "127.0.0.1"
+        sendPort = 29002
 
         payload = b"A" * 1024
-        fragments = _fragment_payload(payload)
+        fragments = _fragmentPayload(payload)
         frames = [
-            _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, fragment)
+            _buildRawFrame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, fragment)
             for fragment in fragments
         ]
 
@@ -145,7 +150,7 @@ class TestLoopbackMultiPassTransfer:
         def listen():
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind((send_host, send_port))
+            sock.bind((sendHost, sendPort))
             sock.settimeout(3)
             try:
                 while True:
@@ -162,7 +167,7 @@ class TestLoopbackMultiPassTransfer:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for frame in frames:
-            sock.sendto(frame, (send_host, send_port))
+            sock.sendto(frame, (sendHost, sendPort))
             time.sleep(0.05)
         sock.close()
 
@@ -172,28 +177,29 @@ class TestLoopbackMultiPassTransfer:
             f"Expected {len(frames)} fragments, received {len(received)}"
         )
 
-    def testReassemblyAfterLoopbackTransfer(self): # payloads extracted from received loopback frames should reassemble correctly.
-        send_host = "127.0.0.1"
-        send_port = 29003
+    # payloads extracted from received loopback frames should reassemble correctly.
+    def testReassemblyAfterLoopbackTransfer(self): 
+        sendHost = "127.0.0.1"
+        sendPort = 29003
 
-        original_payload = b"B" * 1024
-        fragments = _fragment_payload(original_payload)
+        originalPayload = b"B" * 1024
+        fragments = _fragmentPayload(originalPayload)
         frames = [
-            _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, fragment)
+            _buildRawFrame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, fragment)
             for fragment in fragments
         ]
 
-        received_payloads = []
+        receivedPayloads = []
 
         def listen():
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind((send_host, send_port))
+            sock.bind((sendHost, sendPort))
             sock.settimeout(3)
             try:
                 while True:
                     data, _ = sock.recvfrom(1024)
-                    received_payloads.append(data[AX25_HEADER_SIZE:])
+                    receivedPayloads.append(data[AX25_HEADER_SIZE:])
             except socket.timeout:
                 pass
             finally:
@@ -205,25 +211,26 @@ class TestLoopbackMultiPassTransfer:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for frame in frames:
-            sock.sendto(frame, (send_host, send_port))
+            sock.sendto(frame, (sendHost, sendPort))
             time.sleep(0.05)
         sock.close()
 
         listener.join(timeout=5)
 
-        reassembled = b"".join(received_payloads)
-        assert reassembled == original_payload, (
+        reassembled = b"".join(receivedPayloads)
+        assert reassembled == originalPayload, (
             "Reassembled payload from loopback transfer does not match original"
         )
 
-    def testSimulatedInterruptionDropsFragment(self): # simulating a dropped fragment should result in incomplete reassembly.
-        original_payload = b"C" * 1024
-        fragments = _fragment_payload(original_payload)
+    # simulating a dropped fragment should result in incomplete reassembly.
+    def testSimulatedInterruptionDropsFragment(self): 
+        originalPayload = b"C" * 1024
+        fragments = _fragmentPayload(originalPayload)
 
         # simulate an interruption by dropping the second fragment
         fragments_with_interruption = fragments[:1] + fragments[2:]
         reassembled = b"".join(fragments_with_interruption)
 
-        assert reassembled != original_payload, (
+        assert reassembled != originalPayload, (
             "Expected reassembly to fail when a fragment is dropped"
         )

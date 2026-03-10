@@ -86,9 +86,12 @@ The Earth `Lime_Big.grc` flowgraph matches these ports exactly. The Space `Lime_
 3. A `VIOLET2> ` prompt will appear. Type any shell command to send it to the satellite OBC. Results print when a response is received. Type `quit` to exit.
 
 Special local commands available at the prompt:
+- History can be toggled by using the `up` and `down` arrows on your keyboard.
 - `clear` — clear the terminal
 - `download <remote_path> [local_path]` — download a file from the OBC
-- History can be toggled by using the `up` and `down` arrows on your keyboard. 
+- `ping` — send a ping to VIOLET2 and print the round-trip time in milliseconds
+
+> Note: the RTT will always be at least ~2 seconds because `VIOLET2.py` introduces a built-in 2-second transmit delay (`sleep(2)` in `ax25Send`). This delay exists for RF link timing. The ping will time out after 5 seconds if no pong is received. 
 
 ### Space PC / PocketBeagle 2 (OBC)
 
@@ -160,7 +163,7 @@ python -m pytest tests/hardware/ -m hardware -v
 python -m pytest tests/unit/ -v
 ```
 
-**NOTE:** To write a hardware test, place it in `tests/hardware/`, import from `violet2_utils` or `earth_utils` directly, and decorate the class or file with `@pytest.mark.hardware`.
+> Note: To write a hardware test, place it in `tests/hardware/`, import from `violet2_utils` or `earth_utils` directly, and decorate the class or file with `@pytest.mark.hardware`.
 
 ## Python Requirements
 

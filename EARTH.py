@@ -4,6 +4,7 @@ import time
 import subprocess
 import readline  # used for command history and arrow key navigation on Unix/Linux/Mac
 from earth_utils import *
+from earth_utils import _buildViolet2Header, _padApplicationData
 
 # receive and print response as byte string over UDP
 receiveSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -30,6 +31,42 @@ try:
         
         if userInput.lower().startswith("download "): # local command: download <remote_path> [local_path]
             downloadFile(userInput, receiveSocket)
+            continue
+
+        if userInput.lower() == "ping": # local command: send a ping to VIOLET2 and measure round-trip time
+            pingPayload = f"PING:{time.time():.6f}".encode('ascii')
+            pingHeader = _buildViolet2Header(
+                messageType=MSG_PING,
+                sequenceNumber=0,
+                totalPackets=1,
+                packetIndex=0,
+                payloadLength=len(pingPayload),
+            )
+            pingPacket = pingHeader + _padApplicationData(pingPayload)
+
+            # flush stale packets before sending
+            receiveSocket.setblocking(False)
+            try:
+                while True:
+                    receiveSocket.recvfrom(512)
+            except (BlockingIOError, socket.error):
+                pass
+            receiveSocket.settimeout(5)
+
+            sendTime = time.time()
+            ax25Send(pingPacket)
+
+            try:
+                data, _ = receiveSocket.recvfrom(512)
+                rtt = (time.time() - sendTime) * 1000
+                violet2Raw = data[AX25_HEADER_LEN:]
+                parsed = parseViolet2Response(violet2Raw)
+                if "error" not in parsed and parsed["msg_type"] == MSG_PONG:
+                    print(f"Pong! Round-trip time: {rtt:.1f} ms")
+                else:
+                    print(f"Unexpected response to ping (type=0x{parsed.get('msg_type', 0):02X})")
+            except socket.timeout:
+                print("Ping timed out: no response from VIOLET2 after 5 seconds")
             continue
 
         # force flushing buffer
