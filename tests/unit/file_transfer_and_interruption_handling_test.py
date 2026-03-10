@@ -11,7 +11,7 @@ import socket
 import threading
 import time
 from test_utils import (
-    reassemblePayload,
+    reassemble_payload,
     EARTH_CALLSIGN,
     SATELLITE_CALLSIGN,
     DEST_SSID_BYTES,
@@ -106,7 +106,7 @@ class TestFileDownload:
     def testLargeDownloadReassemblesCorrectly(self): 
         original = b"A" * 1024
         fragments = _fragmentPayload(original)
-        reassembled = reassemblePayload(fragments)
+        reassembled = reassemble_payload(fragments)
         assert reassembled == original, "Reassembled download does not match original file"
 
 
