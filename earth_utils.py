@@ -20,6 +20,11 @@ SOURCE_SSID         = "E0"
 DEST_CALLSIGN       = "VE9VLT"
 DEST_SSID           = "60"
 
+# Timeout and Retry Configuration
+RECEIVE_TIMEOUT     = 3   # seconds to wait for a command response or download packet
+PING_TIMEOUT        = 5   # seconds to wait for a pong reply
+DOWNLOAD_MAX_RETRIES = 5  # max consecutive timeouts before aborting a download
+
 # VIOLET2 Layer 2 Protocol Configuration
 VIOLET2_HEADER_LEN  = 8
 VIOLET2_MIN_APP_DATA = 92
@@ -211,21 +216,21 @@ def saveCommandHistory(historyFile):
 # File Download Function
 def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
     
-    # Create tmp directory in script's directory if it doesn't exist
+    # Create tmp_downloads directory in script's directory if it doesn't exist
     scriptDir = os.path.dirname(os.path.abspath(__file__))
-    tmpDir = os.path.join(scriptDir, "tmp")
+    tmpDir = os.path.join(scriptDir, "tmp_downloads")
     try:
         os.makedirs(tmpDir, exist_ok=True)
     except Exception as e:
-        print(f"Error creating tmp directory: {e}")
+        print(f"Error creating tmp_downloads directory: {e}")
         return False
     
     parts = userInput.split(" ", 2)
     if len(parts) < 2:
         print("Usage: download <remote_path> [local_path]")
-        print(f"  download /path/to/file.txt              - save to tmp/ as 'file.txt'")
-        print(f"  download /path/to/file.txt subdir/      - save to tmp/subdir/ as 'file.txt'")
-        print(f"  download /path/to/file.txt newname.txt  - save to tmp/ as 'newname.txt'")
+        print(f"  download /path/to/file.txt              - save to tmp_downloads/ as 'file.txt'")
+        print(f"  download /path/to/file.txt subdir/      - save to tmp_downloads/subdir/ as 'file.txt'")
+        print(f"  download /path/to/file.txt newname.txt  - save to tmp_downloads/ as 'newname.txt'")
         return False
     
     remote_path = parts[1]
@@ -236,11 +241,11 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
         local_path = parts[2]
         # Check if it's a directory (ends with / or \)
         if local_path.endswith(os.sep) or local_path.endswith('/'):
-            # It's a directory within tmp
+            # It's a directory within tmp_downloads
             local_dir = os.path.join(tmpDir, local_path.rstrip('/').rstrip(os.sep))
             local_name = os.path.join(local_dir, remote_filename)
         else:
-            # It's a filename or path within tmp
+            # It's a filename or path within tmp_downloads
             # If it contains path separators, treat the parent as a subdirectory
             local_parent = os.path.dirname(local_path)
             local_filename = os.path.basename(local_path)
@@ -253,7 +258,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                 local_dir = tmpDir
                 local_name = os.path.join(tmpDir, local_filename)
     else:
-        # No local path specified, save to tmp root with remote filename
+        # No local path specified, save to tmp_downloads root with remote filename
         local_dir = tmpDir
         local_name = os.path.join(tmpDir, remote_filename)
     
@@ -283,12 +288,12 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
     except (BlockingIOError, socket.error):
         if flushCount > 0:
             print(f"Flushed {flushCount} stale packets...")
-    receiveSocket.settimeout(3)
+    receiveSocket.settimeout(RECEIVE_TIMEOUT)
 
     # Reassembly buffer for multi-packet downloads
     downloadBuffer = {}
     totalReceived = 0
-    maxRetries = 5
+    maxRetries = DOWNLOAD_MAX_RETRIES
     retryCount = 0
     downloadComplete = False
 

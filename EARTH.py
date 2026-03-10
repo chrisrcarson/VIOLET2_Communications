@@ -10,7 +10,7 @@ from earth_utils import _buildViolet2Header, _padApplicationData
 receiveSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receiveSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # allow reuse of address if previous connection didn't close properly
 receiveSocket.bind((RECEIVE_HOST, RECEIVE_PORT))
-receiveSocket.settimeout(3) # timeout set to 3 seconds
+receiveSocket.settimeout(RECEIVE_TIMEOUT) # timeout set in earth_utils.py
 
 # setup command history for up/down arrow navigation
 historyFile = setupCommandHistory()
@@ -19,7 +19,7 @@ isExiting = False
 try:
     while not isExiting:
         
-        userInput = input("VIOLET2> ")
+        userInput = input("VIOLET2> ").strip()
         
         if userInput.lower() == "quit":
             isExiting = True
@@ -51,7 +51,7 @@ try:
                     receiveSocket.recvfrom(512)
             except (BlockingIOError, socket.error):
                 pass
-            receiveSocket.settimeout(5)
+            receiveSocket.settimeout(PING_TIMEOUT)
 
             sendTime = time.time()
             ax25Send(pingPacket)
@@ -81,7 +81,7 @@ try:
                 print(f"Flushed stale packets...")
         
         # send the command and reset timeout
-        receiveSocket.settimeout(3) 
+        receiveSocket.settimeout(RECEIVE_TIMEOUT)
         rawData = userInput.encode('ascii')
         violet2Packets = violet2ProtocolBuilder(rawData)
         
@@ -151,6 +151,9 @@ try:
         except KeyboardInterrupt:
             isExiting = True
             break
+
+except KeyboardInterrupt:
+    pass  # Ctrl+C at the input() prompt — fall through to cleanup
 
 finally:
     # Save command history before exiting
