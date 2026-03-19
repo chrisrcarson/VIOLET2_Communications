@@ -1,5 +1,6 @@
 import socket
 import os
+from ax25_utils import validate_ax25_header
 
 # Earth Terminal Configuration Constants
 
@@ -11,7 +12,7 @@ UDP_PORT = 27001
 
 # AX.25 Layer 1 Configuration
 AX25_HEADER_LEN     = 16
-AX25_CONTROL        = "00"
+AX25_CONTROL        = "03"
 AX25_FCS            = "0000"
 AX25_PID            = "F0"
 
@@ -20,10 +21,16 @@ SOURCE_SSID         = "E0"
 DEST_CALLSIGN       = "VE9VLT"
 DEST_SSID           = "60"
 
+EARTH_CALLSIGN      = SOURCE_CALLSIGN
+SATELLITE_CALLSIGN  = DEST_CALLSIGN
+
 # Timeout and Retry Configuration
 RECEIVE_TIMEOUT     = 3   # seconds to wait for a command response or download packet
 PING_TIMEOUT        = 5   # seconds to wait for a pong reply
 DOWNLOAD_MAX_RETRIES = 5  # max consecutive timeouts before aborting a download
+COMMAND_MAX_RETRIES = 3   # number of command retransmissions after initial send
+PING_MAX_RETRIES    = 3   # number of ping retransmissions after initial send
+RETRANSMIT_INTERVAL = 1.0 # fixed wait between retransmissions (seconds)
 
 # VIOLET2 Layer 2 Protocol Configuration
 VIOLET2_HEADER_LEN  = 8
@@ -167,6 +174,19 @@ def parseViolet2Response(rawData: bytes) -> dict:
         "payload":     applicationData,
     }
 
+def isAx25DownlinkPacket(rawData: bytes) -> bool:
+    # Earth receives downlink: VIOLET2 -> Earth
+    return validate_ax25_header(
+        raw_data=rawData,
+        expected_dest_callsign=EARTH_CALLSIGN,
+        expected_dest_ssid_hex=DEST_SSID,
+        expected_src_callsign=SATELLITE_CALLSIGN,
+        expected_src_ssid_hex=SOURCE_SSID,
+        expected_control_hex=AX25_CONTROL,
+        expected_pid_hex=AX25_PID,
+        header_len=AX25_HEADER_LEN,
+    )
+
 def ax25Send(payload: bytes) -> bytes:
     ax25Packet = (
         DEST_CALLSIGN.encode('ascii') +
@@ -302,6 +322,10 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
             try:
                 data, addr = receiveSocket.recvfrom(512)
                 totalReceived += 1
+
+                if not isAx25DownlinkPacket(data):
+                    print("[VIOLET2 Error]: packet rejected due to unexpected AX.25 callsigns")
+                    continue
                 
                 violet2Raw = data[AX25_HEADER_LEN:]
                 parsed = parseViolet2Response(violet2Raw)
@@ -374,7 +398,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                         isError = any(keyword in fileContent.lower() for keyword in errorKeywords)
                         if isError:
                             print(f"Error: {fileContent}")
-                            del downloadBuffer[sequenceNumber]
+                            del downloadBuffer[sequenceNum]
                             downloadComplete = True
                             return False
                         with open(local_name, 'w') as f:

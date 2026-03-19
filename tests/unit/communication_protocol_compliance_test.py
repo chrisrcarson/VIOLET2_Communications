@@ -19,6 +19,12 @@ from test_utils import (
     PID_BYTE,
     AX25_HEADER_LEN,
 )
+from earth_utils import isAx25DownlinkPacket
+from violet2_utils import (
+    isAx25Packet,
+    SOURCE_CALLSIGN as VIOLET_SOURCE_CALLSIGN,
+    DEST_CALLSIGN as VIOLET_DEST_CALLSIGN,
+)
 
 AX25_HEADER_SIZE = AX25_HEADER_LEN  # Backward compatibility
 
@@ -126,6 +132,33 @@ class TestUplinkDownlink:
         parsed = parse_ax25_frame(frame)
         assert parsed["source"] == SATELLITE_CALLSIGN, "Parsed source callsign mismatch"
         assert parsed["destination"] == EARTH_CALLSIGN, "Parsed destination callsign mismatch"
+
+
+class TestDirectionalCallsignValidation:
+
+    def testVioletAcceptsUplinkHeader(self):
+        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, b"cmd")
+        assert isAx25Packet(frame), "VIOLET2 should accept uplink VE9CNB -> VE9VLT"
+
+    def testVioletRejectsDownlinkHeader(self):
+        frame = _build_raw_frame(EARTH_CALLSIGN, SATELLITE_CALLSIGN, b"rsp")
+        assert not isAx25Packet(frame), "VIOLET2 should reject downlink headers on receive"
+
+    def testEarthAcceptsDownlinkHeader(self):
+        frame = _build_raw_frame(EARTH_CALLSIGN, SATELLITE_CALLSIGN, b"rsp")
+        assert isAx25DownlinkPacket(frame), "Earth should accept downlink VE9VLT -> VE9CNB"
+
+    def testEarthRejectsUplinkHeader(self):
+        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, b"cmd")
+        assert not isAx25DownlinkPacket(frame), "Earth should reject uplink headers on receive"
+
+    def testVioletTransmitCallsignDirection(self):
+        assert VIOLET_SOURCE_CALLSIGN == SATELLITE_CALLSIGN, (
+            "VIOLET2 source callsign must be VE9VLT for downlink"
+        )
+        assert VIOLET_DEST_CALLSIGN == EARTH_CALLSIGN, (
+            "VIOLET2 destination callsign must be VE9CNB for downlink"
+        )
 
 
 # Test 4: Loopback Communication (no hardware)

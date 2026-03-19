@@ -3,22 +3,26 @@
 # UDP Configuration
 # Set the UDP receive address and port
 RECEIVE_HOST = "127.0.0.1"
-RECEIVE_PORT = 27001
+RECEIVE_PORT = 27000
 
 # Set the UDP server addresses and ports (transmit)
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = 27000
+UDP_PORT = 27001
 
 # AX.25 Layer 1
 AX25_HEADER_LEN     = 16
-AX25_CONTROL        = "00"
+AX25_CONTROL        = "03"
 AX25_FCS            = "0000"
 AX25_PID            = "F0"
 
-SOURCE_CALLSIGN     = "VE9CNB"
-SOURCE_SSID         = "E0"   # Bit 7 = 1, destination SSID
-DEST_CALLSIGN       = "VE9VLT"
-DEST_SSID           = "60"   # Bit 7 = 0, source SSID
+EARTH_CALLSIGN      = "VE9CNB"
+SATELLITE_CALLSIGN  = "VE9VLT"
+
+# VIOLET2 sends downlink frames to Earth and receives uplink frames from Earth.
+SOURCE_CALLSIGN     = SATELLITE_CALLSIGN
+SOURCE_SSID         = "E0"   # Source SSID byte
+DEST_CALLSIGN       = EARTH_CALLSIGN
+DEST_SSID           = "60"   # Destination SSID byte
 
 # VIOLET2 Layer 2
 VIOLET2_HEADER_LEN  = 8
@@ -46,6 +50,7 @@ MSG_PONG            = 0xB1
 
 import socket
 from time import sleep
+from ax25_utils import validate_ax25_header
 
 _sequenceNumber = 0
 
@@ -130,15 +135,17 @@ def parseViolet2Packet(rawData: bytes) -> dict: # parse VIOLET2 Layer 2 header a
     }
 
 def isAx25Packet(rawData: bytes) -> bool: # validate AX.25 header for expected callsigns/control/pid
-    if len(rawData) < AX25_HEADER_LEN:
-        return False
-    dest_ok = rawData[0:6] == DEST_CALLSIGN.encode('ascii')
-    dest_ssid_ok = rawData[6:7] == bytes.fromhex(DEST_SSID)
-    src_ok = rawData[7:13] == SOURCE_CALLSIGN.encode('ascii')
-    src_ssid_ok = rawData[13:14] == bytes.fromhex(SOURCE_SSID)
-    control_ok = rawData[14:15] == bytes.fromhex(AX25_CONTROL)
-    pid_ok = rawData[15:16] == bytes.fromhex(AX25_PID)
-    return dest_ok and dest_ssid_ok and src_ok and src_ssid_ok and control_ok and pid_ok
+    # VIOLET2 receives uplink: Earth -> VIOLET2
+    return validate_ax25_header(
+        raw_data=rawData,
+        expected_dest_callsign=SATELLITE_CALLSIGN,
+        expected_dest_ssid_hex=DEST_SSID,
+        expected_src_callsign=EARTH_CALLSIGN,
+        expected_src_ssid_hex=SOURCE_SSID,
+        expected_control_hex=AX25_CONTROL,
+        expected_pid_hex=AX25_PID,
+        header_len=AX25_HEADER_LEN,
+    )
 
 def violet2ProtocolBuilder(payload: bytes) -> list[bytes]:
     sequenceNumber = _getNextSequenceNumber()
