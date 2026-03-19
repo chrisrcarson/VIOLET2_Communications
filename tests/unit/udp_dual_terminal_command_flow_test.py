@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 LOG_FILE_NAME = "udp_dual_terminal_command_flow_test.log"
+LOG_DIR_NAME = "logs"
 
 
 def _free_udp_port() -> int:
@@ -278,7 +279,10 @@ def receive_response(sock: socket.socket, expected_kind: str, expected_sequence:
     total = None
 
     while time.time() - start < 8:
-        data, _ = sock.recvfrom(4096)
+        try:
+            data, _ = sock.recvfrom(4096)
+        except socket.timeout:
+            continue
         if not isAx25DownlinkPacket(data):
             continue
 
@@ -368,6 +372,8 @@ def main() -> int:
         log_line(
             f"worker_start earth_recv_port={earth_recv_port} violet_recv_port={violet_recv_port} scenario_count={len(scenarios)}"
         )
+        # Allow the peer worker a brief moment to bind before first send on slower CI runners.
+        time.sleep(0.2)
         for scenario in scenarios:
             payload = scenario["command"].encode("ascii")
             log_line(
@@ -422,7 +428,9 @@ if __name__ == "__main__":
 def test_dual_background_terminals_udp_uplink_downlink_commands():
     violet_recv_port = _free_udp_port()
     earth_recv_port = _free_udp_port()
-    log_path = Path(__file__).with_name(LOG_FILE_NAME)
+    log_dir = Path(__file__).resolve().parent / LOG_DIR_NAME
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / LOG_FILE_NAME
 
     log_path.write_text("", encoding="utf-8")
     with log_path.open("a", encoding="utf-8") as handle:
