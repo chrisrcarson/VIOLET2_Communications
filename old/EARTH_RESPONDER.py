@@ -42,7 +42,7 @@ def AX_25Send(Info):
 		Info 
 	)
 
-	print(f"EARTH PC TRANSMISSION: {AX25Packet.hex()}\n")
+	print(f"EARTH TRANSMISSION: {AX25Packet.hex()}\n")
 
 	# push over udp
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -83,9 +83,9 @@ while not isExiting:
     # waiting for response
     try:
         data, addr = receive_socket.recvfrom(2048)#1024)
-        print(f"[Received Data]: {data.hex()}")
+        print(f"[RECEIVED DATA]: {data.hex()}\n")
         command_output = data[16:] 
-        print(f"Response: {command_output.decode('ascii', errors='replace')}")
+        print(f"[Response]:\n{command_output.decode('ascii', errors='replace')}")
         
     except socket.timeout:
         print("Connection Timeout: No data received after 10 seconds")

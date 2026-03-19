@@ -29,13 +29,20 @@ from violet2_utils import (
 # Test Wrapper Functions
 
 def build_ax25_frame(source: str, destination: str, payload: bytes) -> bytes:
-    from earth_utils import SOURCE_CALLSIGN, SOURCE_SSID, DEST_CALLSIGN, DEST_SSID, AX25_CONTROL, AX25_PID
+    from earth_utils import AX25_CONTROL, AX25_PID
+
+    ssid_by_callsign = {
+        EARTH_CALLSIGN: EARTH_SSID_BYTES,
+        SATELLITE_CALLSIGN: SATELLITE_SSID_BYTES,
+    }
+    source_ssid = ssid_by_callsign[source]
+    destination_ssid = ssid_by_callsign[destination]
     
     return (
         destination.encode('ascii') +
-        bytes.fromhex(DEST_SSID) +
+        destination_ssid +
         source.encode('ascii') +
-        bytes.fromhex(SOURCE_SSID) +
+        source_ssid +
         bytes.fromhex(AX25_CONTROL) +
         bytes.fromhex(AX25_PID) +
         payload
@@ -101,9 +108,11 @@ def parse_violet2_packet_safe(raw_data: bytes) -> dict:
 
 EARTH_CALLSIGN = "VE9CNB"
 SATELLITE_CALLSIGN = "VE9VLT"
-DEST_SSID_BYTES = bytes.fromhex("60")
-SRC_SSID_BYTES = bytes.fromhex("E0")
-CONTROL_BYTE = bytes.fromhex("00")
+EARTH_SSID_BYTES = bytes.fromhex("E0")
+SATELLITE_SSID_BYTES = bytes.fromhex("60")
+DEST_SSID_BYTES = SATELLITE_SSID_BYTES
+SRC_SSID_BYTES = EARTH_SSID_BYTES
+CONTROL_BYTE = bytes.fromhex("03")
 PID_BYTE = bytes.fromhex("F0")
 
 __all__ = [
@@ -141,6 +150,8 @@ __all__ = [
     # test constants
     'EARTH_CALLSIGN',
     'SATELLITE_CALLSIGN',
+    'EARTH_SSID_BYTES',
+    'SATELLITE_SSID_BYTES',
     'DEST_SSID_BYTES',
     'SRC_SSID_BYTES',
     'CONTROL_BYTE',
