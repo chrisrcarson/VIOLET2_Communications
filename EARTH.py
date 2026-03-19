@@ -71,6 +71,17 @@ try:
             downloadFile(userInput, receiveSocket)
             continue
 
+        if userInput.lower().startswith("resume "): # local command alias: resume <remote_path> [local_path]
+            # Resume uses the same implementation as download; downloadFile() detects .partial files and continues from byte offset.
+            resumeInput = "download " + userInput[7:].strip()
+            downloadFile(resumeInput, receiveSocket, requirePartial=True)
+            continue
+
+        if userInput.lower() == "resume":
+            print("Usage: resume <remote_path> [local_path]")
+            print("Example: resume test_data/larger_file.txt")
+            continue
+
         if userInput.lower() == "ping": # local command: send a ping to VIOLET2 and measure round-trip time
             pingPayload = f"PING:{time.time():.6f}".encode('ascii')
             pingHeader = _buildViolet2Header(

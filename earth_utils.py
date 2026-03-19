@@ -271,7 +271,7 @@ def saveCommandHistory(historyFile):
     except:
         pass
 
-def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
+def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: bool = False) -> bool:
     # Handle the 'download' command to retrieve a file from VIOLET2. The userInput should be in the format:
     # download <remote_path> [local_path]
 
@@ -328,7 +328,13 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
     # Use the local_name variable as the final path where the downloaded file will be saved. 
     partial_name = f"{local_name}.partial" 
     resume_offset = 0 # If a .partial file exists from a previous incomplete download, get its size to determine the byte offset to resume from. This allows the download to continue from where it left off rather than starting over.
-    if os.path.exists(partial_name): # Check if a .partial file exists for this download.
+    hasPartial = os.path.exists(partial_name)
+    if requirePartial and not hasPartial:
+        print(f"[VIOLET2]: No partial file found for resume: {partial_name}")
+        print("[VIOLET2]: Start a download first, then use resume if interrupted.")
+        return False
+
+    if hasPartial: # Check if a .partial file exists for this download.
         
         try: # If the .partial file exists, attempt to read its size to determine how many bytes were already downloaded. 
             resume_offset = os.path.getsize(partial_name)
@@ -459,6 +465,8 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                         with open(partial_name, 'a') as f:
                             f.write(fileContent)
                         os.replace(partial_name, local_name)
+                        if os.path.exists(partial_name):
+                            os.remove(partial_name)
                     
                     else: # No .partial file, write the content to the specified local file.
                         with open(local_name, 'w') as f: 
@@ -533,6 +541,8 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                             with open(partial_name, 'a') as f:
                                 f.write(fileContent)
                             os.replace(partial_name, local_name)
+                            if os.path.exists(partial_name):
+                                os.remove(partial_name)
                         else:
                             with open(local_name, 'w') as f:
                                 f.write(fileContent)
@@ -578,6 +588,15 @@ def downloadFile(userInput: str, receiveSocket: socket.socket) -> bool:
                         for seq, buf in downloadBuffer.items():
                             print(f"[VIOLET2] Incomplete transfer for seq={seq}: {len(buf['fragments'])}/{buf['total_pkt']} fragments")
                         appendPartialFromBuffer(downloadBuffer)
+
+    except KeyboardInterrupt:
+        print("\n[VIOLET2]: Download interrupted by user (Ctrl+C).")
+        if downloadBuffer:
+            appendPartialFromBuffer(downloadBuffer)
+            print(f"[VIOLET2]: Partial download saved to {partial_name}")
+        else:
+            print("[VIOLET2]: No partial fragments to save.")
+        return False
 
     except Exception as e: # Exception handling for any unexpected errors during the download process.
         print(f"Download error: {e}")
