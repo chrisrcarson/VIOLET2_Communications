@@ -7,11 +7,11 @@ from ax25_utils import validate_ax25_header
 # UDP Configuration
 # Set the UDP receive address and port
 RECEIVE_HOST = "127.0.0.1"
-RECEIVE_PORT = 27001#27000
+RECEIVE_PORT = 27000
 
 # Set the UDP server addresses and ports (transmit)
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = 27000#27001
+UDP_PORT = 27001
 
 # AX.25 Layer 1
 AX25_HEADER_LEN     = 16
