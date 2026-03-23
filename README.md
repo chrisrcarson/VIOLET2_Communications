@@ -88,8 +88,8 @@ The Earth `Lime_Big.grc` flowgraph matches these ports exactly. The Space `Lime_
 
 ### Earth PC (ground station)
 
-1. Open and run `Lime_Big.grc` in GNU Radio Companion.
-2. In a separate terminal, run:
+1. Open and run `Lime_Mini_v5_headless.py` in a terminal.
+2. In a separate terminal with `earth_utils.py` and `ax25_utils.py`, run:
    ```bash
    python EARTH.py
    ```
@@ -108,8 +108,8 @@ Special local commands available at the prompt:
 
 ### Space PC / PocketBeagle 2 (OBC)
 
-1. Open and run `Lime_Mini.grc` in GNU Radio Companion.
-2. In a separate terminal, run:
+1. Open and run `LimeSDR.py` in a terminal.
+2. In a separate terminal with `violet2_utils.py` and `ax25_utils.py`, run:
    ```bash
    python VIOLET2.py
    ```
