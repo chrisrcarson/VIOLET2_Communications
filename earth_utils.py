@@ -487,6 +487,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                             "total_pkt": totalPackets,
                             "fragments": {},
                             "end_seen": False,
+                            "last_nack_missing": set(),
                         }
                     
                     # Store the received fragment in the buffer under the appropriate sequence number and packet index. 
@@ -503,6 +504,22 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                     print(f"[VIOLET2]: Buffering fragment {packetIdx+1}/{totalPackets}...\n")
                     retryCount = 0
 
+                    highestReceived = max(buffer["fragments"].keys(), default=-1)
+                    missingSeenWindow = [
+                        index
+                        for index in range(highestReceived + 1)
+                        if index not in buffer["fragments"]
+                    ]
+                    if missingSeenWindow:
+                        missingSet = set(missingSeenWindow)
+                        if missingSet != buffer["last_nack_missing"]:
+                            sendFragmentNack(sequenceNum, missingSeenWindow)
+                            buffer["last_nack_missing"] = missingSet
+                            print(
+                                f"[VIOLET2]: Early NACK sent for seq={sequenceNum}, "
+                                f"missing {len(missingSeenWindow)} fragment(s)"
+                            )
+
                     # If we have seen the end packet but are STILL MISSING some fragments, 
                     # send a NACK for the missing fragment indices to request retransmission from the satellite.
                     if buffer["end_seen"] and len(buffer["fragments"]) < buffer["total_pkt"]:
@@ -511,11 +528,14 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                             for index in range(buffer["total_pkt"])
                             if index not in buffer["fragments"]
                         ]
-                        sendFragmentNack(sequenceNum, missing)
-                        print(
-                            f"[VIOLET2]: NACK sent for seq={sequenceNum}, "
-                            f"missing {len(missing)} fragment(s)"
-                        )
+                        missingSet = set(missing)
+                        if missingSet != buffer["last_nack_missing"]:
+                            sendFragmentNack(sequenceNum, missing)
+                            buffer["last_nack_missing"] = missingSet
+                            print(
+                                f"[VIOLET2]: NACK sent for seq={sequenceNum}, "
+                                f"missing {len(missing)} fragment(s)"
+                            )
                         continue
                     
                     # If we have SEEN THE END packet and have received all fragments, 
@@ -559,19 +579,23 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
             except socket.timeout: # Socket timeout handling while waiting for packets related to download action.
                 retryCount += 1 
 
-                # If we have a buffer of fragments for any sequence number where we have seen the end packet but are still missing some fragments, send NACKs for the missing fragments to request retransmission from the satellite. 
+                # If we have buffered fragments and are missing any indices, send NACKs for those fragments
+                # to request retransmission from the satellite.
                 # This allows us to attempt to recover from lost packets without having to restart the entire download process, improving reliability during intermittent connectivity issues.
                 if downloadBuffer:
                     for seq, buf in downloadBuffer.items():
-                        if not buf.get("end_seen"):
+                        totalPkt = buf.get("total_pkt", 0)
+                        fragments = buf.get("fragments", {})
+                        if totalPkt <= 0 or not fragments:
                             continue
                         missing = [
                             index
-                            for index in range(buf["total_pkt"])
-                            if index not in buf["fragments"]
+                            for index in range(totalPkt)
+                            if index not in fragments
                         ]
                         if missing:
                             sendFragmentNack(seq, missing)
+                            buf["last_nack_missing"] = set(missing)
                             print(
                                 f"[VIOLET2]: Timeout-triggered NACK for seq={seq}, "
                                 f"missing {len(missing)} fragment(s)"
