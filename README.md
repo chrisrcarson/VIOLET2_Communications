@@ -98,10 +98,13 @@ The Earth `Lime_Big.grc` flowgraph matches these ports exactly. The Space `Lime_
 Special local commands available at the prompt:
 - History can be toggled by using the `up` and `down` arrows on your keyboard.
 - `clear` — clear the terminal
-- `download <remote_path> [local_path]` — download a file from the OBC
+- `download <remote_path> [local_path]` — download a file from the OBC. Files are downloaded in chunks over multiple packets. If interrupted (via Ctrl+C), a `.partial` file is saved so the download can be resumed later.
+- `resume <remote_path> [local_path]` — resume a previously interrupted download from the OBC. A `.partial` file must exist for the original download. Upon successful completion, the `.partial` file is automatically cleaned up.
 - `ping` — send a ping to VIOLET2 and print the round-trip time in milliseconds
 
-> Note: the RTT will always be at least ~2 seconds because `VIOLET2.py` introduces a built-in 2-second transmit delay (`sleep(2)` in `ax25Send`). This delay exists for RF link timing. The ping will time out after 5 seconds if no pong is received. 
+> Note: the RTT will always be at least ~2 seconds because `VIOLET2.py` introduces a built-in 2-second transmit delay (`sleep(2)` in `ax25Send`). This delay exists for RF link timing. The ping will time out after 5 seconds if no pong is received.
+>
+> **Resumable Downloads**: If a download is interrupted (Ctrl+C), EARTH automatically saves received fragments to a `.partial` file. To resume, use `resume <remote_path> [local_path]` with the same path. The `resume` command requires the `.partial` file to exist; it will not create a new download. 
 
 ### Space PC / PocketBeagle 2 (OBC)
 
@@ -160,6 +163,21 @@ Unit tests exercise the protocol logic entirely in Python — no GNU Radio, no L
 ```bash
 python -m pytest tests/unit/ -v
 ```
+
+### Integration Tests (dual-terminal UDP simulation)
+
+Integration tests exercise the full uplink/downlink command flow by spawning background Earth and VIOLET2 worker processes on separate UDP ports. These tests do not require GNU Radio or LimeSDR and can run on any system with Python.
+
+```bash
+# Run the dual-terminal command flow test
+python -m pytest tests/unit/udp_dual_terminal_command_flow_test.py -v
+```
+
+The test simulates real command scenarios (ping, ls, download) with multi-packet fragmentation and response reassembly. Execution logs are written to `tests/unit/logs/udp_dual_terminal_command_flow_test.log` for inspection.
+
+**Test data files:**
+- `test_data/test.txt` — Small reference file (13 bytes)
+- `test_data/ten_packets.txt` — 2480-byte file (exactly 10 × 248-byte VIOLET2 packets) used for multi-packet download testing
 
 ### Hardware Tests (require LimeSDR + GNU Radio)
 

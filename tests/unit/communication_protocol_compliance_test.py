@@ -13,25 +13,59 @@ from test_utils import (
     validate_ax25_frame,
     EARTH_CALLSIGN,
     SATELLITE_CALLSIGN,
-    DEST_SSID_BYTES,
-    SRC_SSID_BYTES,
     CONTROL_BYTE,
     PID_BYTE,
     AX25_HEADER_LEN,
 )
+from earth_utils import isAx25DownlinkPacket
+from violet2_utils import (
+    isAx25UplinkPacket,
+    SOURCE_CALLSIGN as VIOLET_SOURCE_CALLSIGN,
+    DEST_CALLSIGN as VIOLET_DEST_CALLSIGN,
+)
 
 AX25_HEADER_SIZE = AX25_HEADER_LEN  # Backward compatibility
+EARTH_SSID_BYTE = bytes.fromhex("E0")
+SATELLITE_SSID_BYTE = bytes.fromhex("60")
 
 # Manually build a frame the same way the existing code does
-def _build_raw_frame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
+def _build_raw_frame(
+    dest_callsign: str,
+    dest_ssid: bytes,
+    src_callsign: str,
+    src_ssid: bytes,
+    payload: bytes,
+) -> bytes:
     return (
         dest_callsign.encode('ascii') +
-        DEST_SSID_BYTES +
+        dest_ssid +
         src_callsign.encode('ascii') +
-        SRC_SSID_BYTES +
+        src_ssid +
         CONTROL_BYTE +
         PID_BYTE +
         payload
+    )
+
+
+def _build_uplink_frame(payload: bytes) -> bytes:
+    # Earth -> VIOLET2
+    return _build_raw_frame(
+        SATELLITE_CALLSIGN,
+        SATELLITE_SSID_BYTE,
+        EARTH_CALLSIGN,
+        EARTH_SSID_BYTE,
+        payload,
+    )
+
+
+def _build_downlink_frame(payload: bytes) -> bytes:
+    # VIOLET2 -> Earth
+    return _build_raw_frame(
+        EARTH_CALLSIGN,
+        EARTH_SSID_BYTE,
+        SATELLITE_CALLSIGN,
+        SATELLITE_SSID_BYTE,
+        payload,
     )
 
 # Test 1: Frame Structure
@@ -39,45 +73,55 @@ class TestAX25FrameStructure:
 
     def testFrameHasCorrectHeaderSize(self): # AX.25 frame header should be exactly 16 bytes.
         payload = b"test"
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
         assert len(frame) == AX25_HEADER_SIZE + len(payload), (
             f"Expected frame length {AX25_HEADER_SIZE + len(payload)}, got {len(frame)}"
         )
 
     def testDestinationCallsignInFrame(self): # destination callsign should appear at the start of the frame.
         payload = b"test"
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
         assert frame[:6] == SATELLITE_CALLSIGN.encode('ascii'), (
             "Destination callsign not found at expected position in frame"
         )
 
     def testSourceCallsignInFrame(self): # source callsign should appear at bytes 7-12 of the frame.
         payload = b"test"
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
         assert frame[7:13] == EARTH_CALLSIGN.encode('ascii'), (
             "Source callsign not found at expected position in frame"
         )
 
-    def testControlByteCorrect(self): # control byte should be 0x00.
+    def testControlByteCorrect(self): # control byte should be 0x03.
         payload = b"test"
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
         assert frame[14:15] == CONTROL_BYTE, (
             f"Expected control byte {CONTROL_BYTE.hex()}, got {frame[14:15].hex()}"
         )
 
     def testPidByteCorrect(self): # PID byte should be 0xF0.
         payload = b"test"
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
         assert frame[15:16] == PID_BYTE, (
             f"Expected PID byte {PID_BYTE.hex()}, got {frame[15:16].hex()}"
         )
 
     def testPayloadAppendedAfterHeader(self): # payload should appear immediately after the 16-byte header.
         payload = b"hello VIOLET2"
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
         assert frame[AX25_HEADER_SIZE:] == payload, (
             "Payload not found at expected position in frame"
         )
+
+    def testUplinkHeaderSsidsMatchDirection(self):
+        frame = _build_uplink_frame(b"cmd")
+        assert frame[6:7] == SATELLITE_SSID_BYTE, "Uplink destination SSID must match satellite SSID"
+        assert frame[13:14] == EARTH_SSID_BYTE, "Uplink source SSID must match Earth SSID"
+
+    def testDownlinkHeaderSsidsMatchDirection(self):
+        frame = _build_downlink_frame(b"rsp")
+        assert frame[6:7] == EARTH_SSID_BYTE, "Downlink destination SSID must match Earth SSID"
+        assert frame[13:14] == SATELLITE_SSID_BYTE, "Downlink source SSID must match satellite SSID"
 
 
 # Test 2: Callsign Validity
@@ -128,6 +172,55 @@ class TestUplinkDownlink:
         assert parsed["destination"] == EARTH_CALLSIGN, "Parsed destination callsign mismatch"
 
 
+class TestDirectionalCallsignValidation:
+
+    def testVioletAcceptsUplinkHeader(self):
+        frame = _build_uplink_frame(b"cmd")
+        assert isAx25UplinkPacket(frame), "VIOLET2 should accept uplink VE9CNB -> VE9VLT"
+
+    def testVioletRejectsDownlinkHeader(self):
+        frame = _build_downlink_frame(b"rsp")
+        assert not isAx25UplinkPacket(frame), "VIOLET2 should reject downlink headers on receive"
+
+    def testEarthAcceptsDownlinkHeader(self):
+        frame = _build_downlink_frame(b"rsp")
+        assert isAx25DownlinkPacket(frame), "Earth should accept downlink VE9VLT -> VE9CNB"
+
+    def testEarthRejectsUplinkHeader(self):
+        frame = _build_uplink_frame(b"cmd")
+        assert not isAx25DownlinkPacket(frame), "Earth should reject uplink headers on receive"
+
+    def testVioletRejectsBadUplinkSsid(self):
+        # Keep callsigns and flip only source SSID to verify strict SSID validation.
+        frame = _build_raw_frame(
+            SATELLITE_CALLSIGN,
+            SATELLITE_SSID_BYTE,
+            EARTH_CALLSIGN,
+            SATELLITE_SSID_BYTE,
+            b"cmd",
+        )
+        assert not isAx25UplinkPacket(frame), "VIOLET2 should reject uplink with incorrect Earth SSID"
+
+    def testEarthRejectsBadDownlinkSsid(self):
+        # Keep callsigns and flip only source SSID to verify strict SSID validation.
+        frame = _build_raw_frame(
+            EARTH_CALLSIGN,
+            EARTH_SSID_BYTE,
+            SATELLITE_CALLSIGN,
+            EARTH_SSID_BYTE,
+            b"rsp",
+        )
+        assert not isAx25DownlinkPacket(frame), "Earth should reject downlink with incorrect satellite SSID"
+
+    def testVioletTransmitCallsignDirection(self):
+        assert VIOLET_SOURCE_CALLSIGN == SATELLITE_CALLSIGN, (
+            "VIOLET2 source callsign must be VE9VLT for downlink"
+        )
+        assert VIOLET_DEST_CALLSIGN == EARTH_CALLSIGN, (
+            "VIOLET2 destination callsign must be VE9CNB for downlink"
+        )
+
+
 # Test 4: Loopback Communication (no hardware)
 class TestLoopbackCommunication:
 
@@ -135,7 +228,7 @@ class TestLoopbackCommunication:
         send_host = "127.0.0.1"
         send_port = 29000
         payload = b"A" * 100
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
 
         received = []
 
@@ -169,7 +262,7 @@ class TestLoopbackCommunication:
         send_host = "127.0.0.1"
         send_port = 29001
         payload = b"hello VIOLET2" + b"\x00" * 87  # pad to 100 bytes
-        frame = _build_raw_frame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, payload)
+        frame = _build_uplink_frame(payload)
 
         received = []
 

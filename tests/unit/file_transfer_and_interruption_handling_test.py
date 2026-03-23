@@ -14,8 +14,8 @@ from test_utils import (
     reassemble_payload,
     EARTH_CALLSIGN,
     SATELLITE_CALLSIGN,
-    DEST_SSID_BYTES,
-    SRC_SSID_BYTES,
+    EARTH_SSID_BYTES,
+    SATELLITE_SSID_BYTES,
     CONTROL_BYTE,
     PID_BYTE,
     AX25_HEADER_LEN,
@@ -39,15 +39,31 @@ def handleInterruption(transfer_id: str) -> bool:
     raise NotImplementedError("handleInterruption() integration test - requires simulated interruption")
 
 # manually build a frame the same way existing code does
-def _buildRawFrame(dest_callsign: str, src_callsign: str, payload: bytes) -> bytes:
+def _buildRawFrame(
+    dest_callsign: str,
+    dest_ssid: bytes,
+    src_callsign: str,
+    src_ssid: bytes,
+    payload: bytes,
+) -> bytes:
     return (
         dest_callsign.encode('ascii') +
-        DEST_SSID_BYTES +
+        dest_ssid +
         src_callsign.encode('ascii') +
-        SRC_SSID_BYTES +
+        src_ssid +
         CONTROL_BYTE +
         PID_BYTE +
         payload
+    )
+
+
+def _buildDownlinkFrame(payload: bytes) -> bytes:
+    return _buildRawFrame(
+        EARTH_CALLSIGN,
+        EARTH_SSID_BYTES,
+        SATELLITE_CALLSIGN,
+        SATELLITE_SSID_BYTES,
+        payload,
     )
 
 def _fragmentPayload(payload: bytes, max_size: int = MAX_PAYLOAD_SIZE) -> list[bytes]: # split payload into chunks of max_size.
@@ -141,7 +157,7 @@ class TestLoopbackMultiPassTransfer:
         payload = b"A" * 1024
         fragments = _fragmentPayload(payload)
         frames = [
-            _buildRawFrame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, fragment)
+            _buildDownlinkFrame(fragment)
             for fragment in fragments
         ]
 
@@ -185,7 +201,7 @@ class TestLoopbackMultiPassTransfer:
         originalPayload = b"B" * 1024
         fragments = _fragmentPayload(originalPayload)
         frames = [
-            _buildRawFrame(SATELLITE_CALLSIGN, EARTH_CALLSIGN, fragment)
+            _buildDownlinkFrame(fragment)
             for fragment in fragments
         ]
 

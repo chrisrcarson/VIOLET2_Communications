@@ -68,7 +68,7 @@ while 1:
 
 	result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
-	print("Command output:")
+	print("[Command output]:")
 	print(result.stdout)
 	print()
 	info = result.stdout.encode('ascii')
