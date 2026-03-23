@@ -32,7 +32,7 @@ Every packet is wrapped in a 16-byte AX.25 header before being handed to GNU Rad
 | 6 | Destination SSID | `0x60` |
 | 7–12 | Source callsign | `VE9CNB` (Earth) |
 | 13 | Source SSID | `0xE0` |
-| 14 | Control | `0x00` |
+| 14 | Control | `0x03` |
 | 15 | PID | `0xF0` |
 
 `isAx25Packet()` in `violet2_utils.py` validates incoming frames against these expected values and rejects anything that does not match.
