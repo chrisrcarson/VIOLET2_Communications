@@ -155,6 +155,9 @@ try:
         rawData = userInput.encode('ascii')
         violet2Packets = violet2ProtocolBuilder(rawData)
         
+        for attempt in range(1, totalCommandAttempts + 1): # print the command and packet info for debugging before sending
+            sendAx25Packets(violet2Packets) # we send the packets first before waiting for a response, since the satellite won't respond until it receives the command
+
         if len(violet2Packets) > 1:
             print(f"Fragmenting into {len(violet2Packets)} packets...\n")
 
