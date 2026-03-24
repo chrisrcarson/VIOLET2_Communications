@@ -1,15 +1,11 @@
-# VIOLET2 Configuration Constants
-
 import socket
 from time import sleep
 from ax25_utils import validate_ax25_header
 
 # UDP Configuration
-# Set the UDP receive address and port
 RECEIVE_HOST = "127.0.0.1"
 RECEIVE_PORT = 27001#27000
 
-# Set the UDP server addresses and ports (transmit)
 UDP_HOST = "127.0.0.1" 
 UDP_PORT = 27000#27001
 
@@ -24,18 +20,18 @@ EARTH_SSID          = "E0"
 SATELLITE_CALLSIGN  = "VE9VLT"
 SATELLITE_SSID      = "60"
 
-# VIOLET2 sends downlink frames to Earth and receives uplink frames from Earth.
 SOURCE_CALLSIGN     = SATELLITE_CALLSIGN
-SOURCE_SSID         = SATELLITE_SSID    # Source SSID byte
+SOURCE_SSID         = SATELLITE_SSID   
 DEST_CALLSIGN       = EARTH_CALLSIGN
-DEST_SSID           = EARTH_SSID        # Destination SSID byte
+DEST_SSID           = EARTH_SSID       
 
 # VIOLET2 Layer 2
-VIOLET2_HEADER_LEN      = 8
-VIOLET2_MIN_APP_DATA    = 92
-VIOLET2_MAX_APP_DATA    = 248
+VIOLET2_HEADER_LEN          = 8 # Bytes
+VIOLET2_MIN_APP_DATA        = 92
+VIOLET2_MAX_APP_DATA        = 248
 VIOLET2_RECEIVE_BUFFER_SIZE = 2048
 
+# Padding Bytes
 PAD_BYTE_A  = 0xAA
 PAD_BYTE_B  = 0x55
 
@@ -122,7 +118,7 @@ def _fragmentData(data: bytes) -> list[bytes]:
     offset = 0 # start at the beginning of the data
 
     while offset < len(data): # loop through all data
-        fragments.append( data[offset:offset + VIOLET2_MAX_APP_DATA]) # take a chunk of data and add to fragments list
+        fragments.append(data[offset:offset + VIOLET2_MAX_APP_DATA]) # take a chunk of data and add to fragments list
         offset += VIOLET2_MAX_APP_DATA # move the offset forward by the chunk size for the next iteration
     
     return fragments
@@ -228,7 +224,7 @@ def violet2ProtocolBuilder(payload: bytes) -> list[bytes]:
 
     return packets
 
-def ax25Send(payload: bytes) -> bytes:
+def ax25Send(payload: bytes, txSocket: socket.socket | None = None) -> bytes:
     """
     Build an AX.25 packet with the given payload and send it over UDP to the configured address and port for transmission.
     Returns: the complete AX.25 packet that was sent, as bytes.
@@ -244,9 +240,14 @@ def ax25Send(payload: bytes) -> bytes:
     )
 
     print(f"[VIOLET2 TRANSMISSION]: {ax25Packet.hex()}\n")
-    sleep(2) 
+    sleep(2) # DEBUGGING: simulates transmission when testing over UDP loopback
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.sendto(ax25Packet, (UDP_HOST, UDP_PORT))
-    sock.close()
+    # use a caller-provided socket when available, otherwise use a temporary one.
+    if txSocket is not None:
+        txSocket.sendto(ax25Packet, (UDP_HOST, UDP_PORT))
+    else:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(ax25Packet, (UDP_HOST, UDP_PORT))
+        sock.close()
+    
     return ax25Packet

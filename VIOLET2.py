@@ -8,6 +8,9 @@ receiveSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receiveSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # allow reuse of address if previous connection didn't close properly
 receiveSocket.bind((RECEIVE_HOST, RECEIVE_PORT))
 
+# transmit socket setup (reused for all sends)
+transmitSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 reassemblyBuffer = {} # fragment reassembly buffer (key: sequenceNumber, value: dict with total_pkt) then contains additional dict with fragments
 downlinkResponseCache = {} # cache of recent downlink responses (key: sequenceNumber, value: list of packets) for potential retransmission on NACK
 
@@ -22,7 +25,7 @@ def _NACK(sequenceNumber: int, missingIndices: list[int]):
             [i & 0xFF for i in missingIndices] # list of missing packet indices as remaining bytes
         )
     nackHeader = _buildViolet2Header(MSG_NACK, sequenceNumber, 1, 0, len(nackPayload)) # build VIOLET2 header for NACK message
-    ax25Send(nackHeader + _padApplicationData(nackPayload)) # send NACK
+    ax25Send(nackHeader + _padApplicationData(nackPayload), txSocket=transmitSocket) # send NACK
     print(f"[VIOLET2]: NACK sent for seq={sequenceNumber}, missing={missingIndices}\n")
 
 def _resendRequestedFragments(sequenceNumber: int, requestedIndices: list[int]):
@@ -47,7 +50,7 @@ def _resendRequestedFragments(sequenceNumber: int, requestedIndices: list[int]):
     fragmentCount = 0
     for index in sorted(set(requestedIndices)):
         if 0 <= index < len(packets):
-            ax25Send(packets[index])
+            ax25Send(packets[index], txSocket=transmitSocket)
             fragmentCount += 1
 
     print(f"[VIOLET2]: retransmitted {fragmentCount} fragment(s) for seq={sequenceNumber}")
@@ -55,7 +58,7 @@ def _resendRequestedFragments(sequenceNumber: int, requestedIndices: list[int]):
 def receiveValidatedUplinkPacket(sock: socket.socket):
     """
     Receive and validate an incoming AX.25 uplink packet.
-    Returns the validated packet data.
+    Returns: the validated packet data.
     """
     # loop until we receive a valid packet with expected AX.25 header (callsigns, control, PID)
     while True: 
@@ -76,7 +79,7 @@ try:
         # Step 1: validate and parse incoming packet
         data = receiveValidatedUplinkPacket(receiveSocket) 
 
-        # Step 2: Strip AX.25 header and parse VIOLET2 layer
+        # Step 2: strip AX.25 header and parse VIOLET2 layer
         rawData = data[AX25_HEADER_LEN:] 
         violet2Packet = parseViolet2Packet(rawData)
 
@@ -170,7 +173,7 @@ try:
                 packetIndex=0,
                 payloadLength=len(pongPayload),
             )
-            ax25Send(pongHeader + _padApplicationData(pongPayload))
+            ax25Send(pongHeader + _padApplicationData(pongPayload), txSocket=transmitSocket)
             continue
         
         # Step 3.3: Handle NACK messages for retransmissions
@@ -241,10 +244,11 @@ try:
 
         # send each packet to the AX.25 layer for transmission
         for info in violet2Packets: 
-            ax25Send(info)
+            ax25Send(info, txSocket=transmitSocket)
 
 except KeyboardInterrupt:
     print("\nShutting down VIOLET2 responder...")
 finally:
     receiveSocket.close()
+    transmitSocket.close()
     print("Cleaned up connections.")

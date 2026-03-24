@@ -1,3 +1,4 @@
+
 def validate_ax25_header(
     raw_data: bytes,
     expected_dest_callsign: str,
@@ -8,6 +9,10 @@ def validate_ax25_header(
     expected_pid_hex: str,
     header_len: int = 16,
 ) -> bool:
+    """
+    Validate an AX.25 header against expected values.
+    Returns: True if the header is valid, False otherwise.
+    """
     if len(raw_data) < header_len:
         return False
 
