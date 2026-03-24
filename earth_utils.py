@@ -156,7 +156,7 @@ def _fragmentData(data: bytes) -> list[bytes]:
     
     return fragments
 
-def parseViolet2Packet(rawData: bytes) -> dict:
+def parseViolet2Response(rawData: bytes) -> dict:
     """
     Parse a raw byte string as a VIOLET2 packet, extracting the header fields and application data.
     Returns: a dict containing the parsed VIOLET2 packet information, or an error message if parsing fails.
@@ -423,7 +423,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
 
     # if attempting "resume" and no .partial file exists, print warning and return False
     if requirePartial and not hasPartial:
-        print(f"[VIOLET2]: No partial file found for resume: {partialName}. Start a download first, then use resume if interrupted.")
+        print(f"[EARTH PC]: No partial file found for resume: {partialName}. Start a download first, then use resume if interrupted.")
         return False
 
     # .partial file exists after "resume" command called
@@ -434,10 +434,10 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
 
             # if the .partial is longer than the actual file on VIOLET2, use the tail command
             if resumeOffset > 0:
-                print(f"[VIOLET2]: Found partial download ({resumeOffset} bytes). Attempting to resume download...")
+                print(f"[EARTH PC]: Found partial download ({resumeOffset} bytes). Attempting to resume download...")
         
         except OSError as e: # if there is an error reading the .partial file size, print a warning and start from the beginning of the file
-            print(f"[VIOLET2]: Warning! Could not read partial file size: {e}")
+            print(f"[EARTH PC]: Warning! Could not read partial file size: {e}")
             resumeOffset = 0
 
     def appendPartialFromBuffer(buffer_map: dict[int, dict]):
@@ -471,12 +471,13 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                 with open(partialName, 'a') as f: # write chunk to the .partial file
                     f.write(chunk)
 
-                print(f"[VIOLET2]: Saved {len(chunk)} bytes of partial data (seq={seq}) to {partialName}")
+                print(f"[EARTH PC]: Saved {len(chunk)} bytes of partial data (seq={seq}) to {partialName}")
             
             except Exception as write_err:
-                print(f"[VIOLET2]: Warning! Failed to save partial data: {write_err}")
+                print(f"[EARTH PC]: Warning! Failed to save partial data: {write_err}")
 
-    # BEGIN DOWNLOAD PROCESS
+    ### BEGIN DOWNLOAD PROCESS ###
+
     # Step 4: Send command to satellite (resume uses tail from byte offset)
     if resumeOffset > 0: 
         raw_data = f"tail -c +{resumeOffset + 1} {remotePath}".encode('ascii')
@@ -524,7 +525,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
 
                 # validate downlink response packet
                 if not isAx25DownlinkPacket(data): 
-                    print("[VIOLET2]: Error! Packet rejected due to unexpected AX.25 callsigns")
+                    print("[EARTH PC]: Error! Packet rejected due to unexpected AX.25 callsigns")
                     continue
                 
                 # if packet is valid, parse the VIOLET2 header and payload
@@ -533,7 +534,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
 
                 # if there was an error parsing the VIOLET2 packet, print the error message and continue to the next received packet
                 if "error" in parsed: 
-                    print(f"[VIOLET2]: Error! {parsed['error']}")
+                    print(f"[EARTH PC]: Error! {parsed['error']}")
                     continue
                 
                 # parse VIOLET2 header fields and payload for valid packets
@@ -552,7 +553,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                     isError = any(keyword in fileContent.lower() for keyword in errorKeywords) # check if response contains error message
                     
                     if isError: # Notify user of error
-                        print(f"[VIOLET2]: Error! {fileContent}")
+                        print(f"[EARTH PC]: Error! {fileContent}")
                         downloadComplete = True # download is marked as complete to exit the receive loop with a failure status
                         return False
 
@@ -569,7 +570,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                         with open(localName, 'w') as f: 
                             f.write(fileContent)
 
-                    print(f"[VIOLET2]: Downloaded [{remotePath}] to [{localName}]") 
+                    print(f"[EARTH PC]: Downloaded [{remotePath}] to [{localName}]") 
                     downloadComplete = True
                     return True
 
@@ -593,7 +594,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                     if messageType == RESP_MULTI_END:
                         buffer["end_seen"] = True
                     
-                    print(f"[VIOLET2]: Buffering fragment {packetIdx+1}/{totalPackets}...\n")
+                    print(f"[EARTH PC]: Buffering fragment {packetIdx+1}/{totalPackets}...\n")
 
                     retryCount = 0
                     highestReceived = max(buffer["fragments"].keys(), default=-1) # find the highest packet index we have received so far for this sequence number
@@ -614,7 +615,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                             _NACK(sequenceNum, missingSeenWindow) # send NACK
                             buffer["last_nack_missing"] = missingSet # update the buffer with the set of missing indices just NACK'd
                             print(
-                                f"[VIOLET2]: Early NACK sent for seq={sequenceNum}, "
+                                f"[EARTH PC]: Early NACK sent for seq={sequenceNum}, "
                                 f"missing {len(missingSeenWindow)} fragment(s)"
                             )
 
@@ -636,7 +637,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                             _NACK(sequenceNum, missing) # send NACK
                             buffer["last_nack_missing"] = missingSet # update buffer with the set of missing indices just NACK'd
                             print(
-                                f"[VIOLET2]: NACK sent for seq={sequenceNum}, "
+                                f"[EARTH PC]: NACK sent for seq={sequenceNum}, "
                                 f"missing {len(missing)} fragment(s)"
                             )
                         continue
@@ -644,7 +645,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                     # if we have seen the end of the multi-packet message and have received all fragments, we can reassemble the file content and save to disk
                     if buffer["end_seen"] and len(buffer["fragments"]) == buffer["total_pkt"]:
                         
-                        print(f"[VIOLET2]: All {buffer['total_pkt']} fragments received, reassembling...\n")
+                        print(f"[EARTH PC]: All {buffer['total_pkt']} fragments received, reassembling...\n")
                         fileContent = b"".join( # reassemble the file content by concatenating the fragments in order based on their packet index
                             buffer["fragments"][i] for i in range(buffer["total_pkt"])
                         ).decode('ascii', errors='replace')
@@ -655,7 +656,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
 
                         # if the reassembled content contains an error message, print the error and mark the download as complete with a failure status to exit the receive loop
                         if isError: 
-                            print(f"[VIOLET2]: Error! {fileContent}\n")
+                            print(f"[EARTH PC]: Error! {fileContent}\n")
                             del downloadBuffer[sequenceNum]
                             downloadComplete = True
                             return False
@@ -672,14 +673,14 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                                 f.write(fileContent)
     
                         _ACK(sequenceNum) # send ACK to VIOLET2 to confirm successful receipt of the complete multi-packet message
-                        print(f"[VIOLET2]: Downloaded [{remotePath}] to [{localName}] {totalReceived} packets.\n")
+                        print(f"[EARTH PC]: Downloaded [{remotePath}] to [{localName}] {totalReceived} packets.\n")
                         del downloadBuffer[sequenceNum] # remove entry for this seq_num from buffer after successful download and ACK
                         downloadComplete = True
                         return True
                 
                 # Step 6.3: message type is not recognized
                 else: 
-                    print(f"[VIOLET2]: Error! Unexpected message type 0x{messageType:02X}")
+                    print(f"[EARTH PC]: Error! Unexpected message type 0x{messageType:02X}")
 
             # Step 7: Handle receive timeout for download responses
             except socket.timeout: 
@@ -709,35 +710,35 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                             _NACK(seq, missing)
                             buf["last_nack_missing"] = set(missing)
                             print(
-                                f"[VIOLET2]: Timeout-triggered NACK for seq={seq}, "
+                                f"[EARTH PC]: Timeout-triggered NACK for seq={seq}, "
                                 f"missing {len(missing)} fragment(s)"
                             )
                 
                 # if we have not received any packets for the current download, timeout, print warning and retransmit if attempts remain.
                 if retryCount < DOWNLOAD_MAX_RETRIES: 
-                    print(f"[VIOLET2]: Timeout (attempt {retryCount}/{DOWNLOAD_MAX_RETRIES}), waiting for more packets...")
+                    print(f"[EARTH PC]: Timeout (attempt {retryCount}/{DOWNLOAD_MAX_RETRIES}), waiting for more packets...")
                 
                 else: # Timed out completely
-                    print(f"[VIOLET2]: Connection Timeout: No more data after {DOWNLOAD_MAX_RETRIES} attempts")
+                    print(f"[EARTH PC]: Connection Timeout: No more data after {DOWNLOAD_MAX_RETRIES} attempts")
                     
                     # on complete timeout, check if we have any fragments in the buffer for the current download, print warning indicating download is incomplete 
                     if downloadBuffer: 
 
                         # loop through each seq_num in the buffer and print fragments received vs. total expected
                         for seq, buf in downloadBuffer.items():
-                            print(f"[VIOLET2] Incomplete transfer for seq={seq}: {len(buf['fragments'])}/{buf['total_pkt']} fragments")
+                            print(f"[EARTH PC] Incomplete transfer for seq={seq}: {len(buf['fragments'])}/{buf['total_pkt']} fragments")
                         
                         # if fragments were received but the file is incomplete, attempt to add new fragments to .partial if possible to save progress.
                         appendPartialFromBuffer(downloadBuffer)
 
     except KeyboardInterrupt:
-        print("\n[VIOLET2]: Download interrupted by user (Ctrl+C).")
+        print("\n[EARTH PC]: Download interrupted by user (Ctrl+C).")
         if downloadBuffer:
             appendPartialFromBuffer(downloadBuffer)
-            print(f"[VIOLET2]: Partial download saved to [{partialName}]")
+            print(f"[EARTH PC]: Partial download saved to [{partialName}]")
             
         else:
-            print("[VIOLET2]: No partial fragments to save.")
+            print("[EARTH PC]: No partial fragments to save.")
 
         return False
 

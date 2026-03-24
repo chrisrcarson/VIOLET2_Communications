@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: FSK_NO_GUI_V2
+# Title: Lime_Mini_v5_headless
 # GNU Radio version: 3.10.9.2
 
 import os
@@ -35,10 +35,10 @@ import limesdr
 
 
 
-class FSK_NO_GUI_V2(gr.top_block):
+class Lime_Mini_v5_headless(gr.top_block):
 
     def __init__(self, baud_rate=1200, dl_freq=145.91e6, rx_gain=56, sps=160, tx_gain=56, ul_freq=436830000):
-        gr.top_block.__init__(self, "FSK_NO_GUI_V2", catch_exceptions=True)
+        gr.top_block.__init__(self, "Lime_Mini_v5_headless", catch_exceptions=True)
 
         ##################################################
         # Parameters
@@ -263,7 +263,7 @@ def argument_parser():
     return parser
 
 
-def main(top_block_cls=FSK_NO_GUI_V2, options=None):
+def main(top_block_cls=Lime_Mini_v5_headless, options=None):
     if options is None:
         options = argument_parser().parse_args()
     tb = top_block_cls(baud_rate=options.baud_rate, dl_freq=options.dl_freq, sps=options.sps, ul_freq=options.ul_freq)

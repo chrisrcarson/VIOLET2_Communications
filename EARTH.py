@@ -168,7 +168,7 @@ try: # main command loop
             # set timeout for receive
             receiveSocket.settimeout(RECEIVE_TIMEOUT)
             
-            # Step 3: Transmit each packet of the command using AX.25 
+            # Step 3: Transmit each packet of the command using AX.25 (re-transmit also happens here)
             for info in violet2Packets: 
                 ax25Send(info, txSocket=transmitSocket)
 
