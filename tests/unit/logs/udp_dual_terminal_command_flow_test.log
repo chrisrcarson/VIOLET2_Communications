@@ -1,7 +1,7 @@
 [TEST] start dual-terminal udp command flow
-[TEST] earth_recv_port=52812 violet_recv_port=52811
-[VIOLET] worker_start recv_port=52811 earth_recv_port=52812 expected_transactions=3
-[EARTH] worker_start earth_recv_port=52812 violet_recv_port=52811 scenario_count=3
+[TEST] earth_recv_port=59475 violet_recv_port=59474
+[VIOLET] worker_start recv_port=59474 earth_recv_port=59475 expected_transactions=3
+[EARTH] worker_start earth_recv_port=59475 violet_recv_port=59474 scenario_count=3
 [EARTH] send_scenario name=ping seq=11 command=ping-token-123
 [VIOLET] received ping seq=11
 [VIOLET] sent pong seq=11 completed=1
@@ -16,7 +16,7 @@
 [VIOLET] command download completed path=test_data/test.txt bytes=13
 [VIOLET] sending_response seq=13 fragments=1 response_bytes=13
 [EARTH] received_response name=download fragmented_downlink=False bytes=13
-[EARTH] results_written path=C:\Users\olivi\AppData\Local\Temp\tmpiljoj0x8\results.json
+[EARTH] results_written path=C:\Users\olivi\AppData\Local\Temp\tmpckukgz8b\results.json
 [VIOLET] worker_end completed=3 rc=0
 [TEST] earth stdout begin
 
