@@ -1,13 +1,14 @@
 import socket
+import os
 from time import sleep
 from ax25_utils import validate_ax25_header
 
 # UDP Configuration
 RECEIVE_HOST = "127.0.0.1"
-RECEIVE_PORT = 27001#27000
+RECEIVE_PORT = int(os.environ.get("VIOLET2_RECEIVE_PORT", "27001"))
 
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = 27000#27001
+UDP_PORT = int(os.environ.get("VIOLET2_UDP_PORT", "27000"))
 
 # AX.25 Layer 1
 AX25_HEADER_LEN     = 16
@@ -240,8 +241,7 @@ def ax25Send(payload: bytes, txSocket: socket.socket | None = None) -> bytes:
     )
 
     print(f"[VIOLET2 TRANSMISSION]: {ax25Packet.hex()}\n")
-    sleep(2) # DEBUGGING: simulates transmission when testing over UDP loopback
-
+   
     # use a caller-provided socket when available, otherwise use a temporary one.
     if txSocket is not None:
         txSocket.sendto(ax25Packet, (UDP_HOST, UDP_PORT))

@@ -1,0 +1,18 @@
+[TEST] start dual-terminal download with delayed first fragment
+[TEST] earth_recv_port=52643 violet_recv_port=52642
+[VIOLET-LATE] worker_start recv_port=52642 earth_recv_port=52643
+[EARTH] worker_start earth_recv_port=52643 violet_recv_port=52642
+[EARTH] send_download_command packets=1 command=download test_data/larger_file.txt
+[VIOLET-LATE] initial_send seq=21 sent_indices=[1] total=2
+[EARTH] receive_download_with_recovery seq=21 max_retries=10
+[EARTH] receive_download_with_recovery total_packets=2
+[EARTH] receive_download_with_recovery received fragment pkt_idx=1 total_received=1/2
+[EARTH] receive_download_with_recovery incomplete (END received): missing=[0] retry=1/10
+[EARTH] receive_download_with_recovery sent NACK for missing fragments
+[VIOLET-LATE] received NACK seq=21 missing_indices=[0]
+[EARTH] receive_download_with_recovery received fragment pkt_idx=0 total_received=2/2
+[EARTH] receive_download_with_recovery received fragment pkt_idx=1 total_received=2/2
+[EARTH] receive_download_with_recovery all fragments received successfully
+[EARTH] download_complete received_bytes=400 expected_bytes=400
+[EARTH] results_written success=True
+[VIOLET-LATE] worker_end completed_downloads=1 nack_seen=True rc=0

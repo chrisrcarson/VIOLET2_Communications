@@ -4,10 +4,10 @@ from ax25_utils import validate_ax25_header
 
 # UDP Configuration
 RECEIVE_HOST = "127.0.0.1"
-RECEIVE_PORT = 27000 
+RECEIVE_PORT = int(os.environ.get("EARTH_RECEIVE_PORT", "27000"))
 
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = 27001
+UDP_PORT = int(os.environ.get("EARTH_UDP_PORT", "27001"))
 
 # AX.25 Layer 1
 AX25_HEADER_LEN     = 16
@@ -216,12 +216,12 @@ def violet2ProtocolBuilder(payload: bytes) -> list[bytes]:
     """
     sequenceNumber = _getNextSequenceNumber() # get the next available seq_num for the VIOLET2 header
 
-    # if payload fits in a single packet, use RESP_SINGLE message type
-    if len(payload) <= VIOLET2_MAX_APP_DATA: 
+    # if payload fits in a single packet, use MSG_CMD_SINGLE message type
+    if len(payload) <= VIOLET2_MAX_APP_DATA:
         payloadLength = len(payload) # calculate the actual payload length (before padding)
         applicationData = _padApplicationData(payload) # pad the application data
-        header = _buildViolet2Header( # build the VIOLET2 header for a single packet response
-            messageType=RESP_SINGLE,
+        header = _buildViolet2Header( # build the VIOLET2 header for a single packet command
+            messageType=MSG_CMD_SINGLE,
             sequenceNumber=sequenceNumber,
             totalPackets=1,
             packetIndex=0,
@@ -237,14 +237,14 @@ def violet2ProtocolBuilder(payload: bytes) -> list[bytes]:
     packets = [] # fragment with header storage list
     for index, chunk in enumerate(fragments): 
         
-        if index == 0: # first packet = RESP_MULTI_START message type
-            messageType = RESP_MULTI_START
+        if index == 0: # first packet = MSG_CMD_MULTI_START message type
+            messageType = MSG_CMD_MULTI_START
 
-        elif index == totalPackets - 1: # last packet = RESP_MULTI_END message type
-            messageType = RESP_MULTI_END
+        elif index == totalPackets - 1: # last packet = MSG_CMD_MULTI_END message type
+            messageType = MSG_CMD_MULTI_END
 
-        else: # middle packets = RESP_MULTI_CONT message type
-            messageType = RESP_MULTI_CONT
+        else: # middle packets = MSG_CMD_MULTI_CONT message type
+            messageType = MSG_CMD_MULTI_CONT
 
         header = _buildViolet2Header( # build the VIOLET2 header for this fragment based on its position in the sequence
             messageType=messageType,
@@ -543,8 +543,9 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                 totalPackets = parsed["total_pkt"]
                 packetIdx = parsed["pkt_idx"]
                 payload = parsed["payload"]
+                totalReceived += 1
 
-                print(f"[Packet {totalReceived}] type=0x{messageType:02X} seq={sequenceNum} pkt {packetIdx+1}/{totalPackets} payload_len={parsed['payload_len']}")
+                print(f"[Pass {totalReceived}] type=0x{messageType:02X} seq={sequenceNum} pkt {packetIdx+1}/{totalPackets} payload_len={parsed['payload_len']}")
 
                 # Step 6.1: Handle single packet response
                 if messageType == RESP_SINGLE:
@@ -587,6 +588,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                         }
                     
                     # buffer the received fragment in the downloadBuffer under its sequence number
+                    buffer = downloadBuffer[sequenceNum]
                     buffer["total_pkt"] = max(buffer["total_pkt"], totalPackets)
                     buffer["fragments"][packetIdx] = payload
 

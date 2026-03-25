@@ -96,7 +96,7 @@ try:
               f"payload_len={violet2Packet['payload_len']} checksum=OK\n")
 
         # Step 3.1: Handle a single packet command (executed immediately without reassembly)
-        if messageType == MSG_CMD_SINGLE:
+        if messageType == MSG_CMD_SINGLE or messageType == RESP_SINGLE:
             command = violet2Packet["payload"].decode('ascii', errors='replace')
 
         # Step 3.2: Handle the first packet in a multi-part packet

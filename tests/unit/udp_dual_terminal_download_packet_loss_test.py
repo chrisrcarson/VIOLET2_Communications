@@ -616,3 +616,290 @@ def test_dual_background_terminals_download_with_packet_loss():
         assert earth_rc == 0, f"EARTH worker exited with code {earth_rc}"
         assert results["success"], f"Download failed or content mismatch: {results}"
         assert results["content_matches"], "Received content does not match expected"
+
+
+VIOLET_WORKER_LATE_START_FRAGMENT = r'''
+import os
+import socket
+import time
+from pathlib import Path
+
+from earth_utils import (
+    AX25_CONTROL,
+    AX25_HEADER_LEN,
+    AX25_PID,
+    EARTH_CALLSIGN,
+    EARTH_SSID,
+    MSG_CMD_MULTI_CONT,
+    MSG_CMD_MULTI_END,
+    MSG_CMD_MULTI_START,
+    MSG_CMD_SINGLE,
+    MSG_NACK,
+    RESP_MULTI_CONT,
+    RESP_MULTI_END,
+    RESP_MULTI_START,
+    RESP_SINGLE,
+    SATELLITE_CALLSIGN,
+    SATELLITE_SSID,
+    _buildViolet2Header,
+    _padApplicationData,
+)
+from violet2_utils import isAx25UplinkPacket, parseViolet2Packet
+
+
+LOG_PATH = os.environ.get("TEST_OUTPUT_LOG_PATH")
+
+
+def log_line(message: str):
+    if not LOG_PATH:
+        return
+    with open(LOG_PATH, "a", encoding="utf-8") as handle:
+        handle.write(f"[VIOLET-LATE] {message}\n")
+
+
+def build_ax25_downlink(payload: bytes) -> bytes:
+    return (
+        EARTH_CALLSIGN.encode("ascii")
+        + bytes.fromhex(EARTH_SSID)
+        + SATELLITE_CALLSIGN.encode("ascii")
+        + bytes.fromhex(SATELLITE_SSID)
+        + bytes.fromhex(AX25_CONTROL)
+        + bytes.fromhex(AX25_PID)
+        + payload
+    )
+
+
+def build_response_packets(response_text: bytes, sequence_number: int) -> list[bytes]:
+    max_app_data = 248
+
+    if len(response_text) <= max_app_data:
+        header = _buildViolet2Header(
+            messageType=RESP_SINGLE,
+            sequenceNumber=sequence_number,
+            totalPackets=1,
+            packetIndex=0,
+            payloadLength=len(response_text),
+        )
+        return [header + _padApplicationData(response_text)]
+
+    fragments = [
+        response_text[i:i + max_app_data]
+        for i in range(0, len(response_text), max_app_data)
+    ]
+    total = len(fragments)
+    packets = []
+
+    for idx, chunk in enumerate(fragments):
+        if idx == 0:
+            msg_type = RESP_MULTI_START
+        elif idx == total - 1:
+            msg_type = RESP_MULTI_END
+        else:
+            msg_type = RESP_MULTI_CONT
+
+        header = _buildViolet2Header(
+            messageType=msg_type,
+            sequenceNumber=sequence_number,
+            totalPackets=total,
+            packetIndex=idx,
+            payloadLength=len(chunk),
+        )
+        packets.append(header + _padApplicationData(chunk))
+
+    return packets
+
+
+def execute_local_command(command: str) -> str:
+    if command.startswith("download "):
+        relative_path = command[len("download "):].strip()
+        target = Path(relative_path)
+        if not target.exists() or not target.is_file():
+            return f"DOWNLOAD_ERROR:{relative_path}"
+        return target.read_text(encoding="utf-8", errors="replace")
+    return f"UNKNOWN:{command}"
+
+
+def main() -> int:
+    recv_port = int(os.environ["TEST_VIOLET_RECV_PORT"])
+    earth_recv_port = int(os.environ["TEST_EARTH_RECV_PORT"])
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("127.0.0.1", recv_port))
+    sock.settimeout(0.5)
+
+    reassembly = {}
+    downlink_cache = {}
+    completed_downloads = 0
+    nack_seen = False
+    idle_ticks = 0
+
+    try:
+        log_line(
+            f"worker_start recv_port={recv_port} earth_recv_port={earth_recv_port}"
+        )
+
+        while idle_ticks < 80:
+            try:
+                data, _ = sock.recvfrom(4096)
+                idle_ticks = 0
+            except socket.timeout:
+                idle_ticks += 1
+                if completed_downloads >= 1 and nack_seen:
+                    break
+                continue
+
+            if not isAx25UplinkPacket(data):
+                continue
+
+            parsed = parseViolet2Packet(data[AX25_HEADER_LEN:])
+            if "error" in parsed:
+                continue
+
+            msg_type = parsed["msg_type"]
+            seq = parsed["seq_num"]
+
+            if msg_type == MSG_NACK:
+                payload = parsed["payload"]
+                if len(payload) < 1:
+                    continue
+
+                nack_seq = payload[0]
+                missing_indices = list(payload[1:]) if len(payload) > 1 else []
+                log_line(f"received NACK seq={nack_seq} missing_indices={missing_indices}")
+
+                if nack_seq not in downlink_cache:
+                    continue
+
+                nack_seen = True
+                packets = downlink_cache[nack_seq]
+                indices_to_send = missing_indices if missing_indices else list(range(len(packets)))
+
+                # EARTH finalizes on RESP_MULTI_END, so re-send the final fragment too.
+                if len(packets) > 1:
+                    end_index = len(packets) - 1
+                    if end_index not in indices_to_send:
+                        indices_to_send = list(indices_to_send) + [end_index]
+
+                for idx in sorted(set(indices_to_send)):
+                    if 0 <= idx < len(packets):
+                        frame = build_ax25_downlink(packets[idx])
+                        sock.sendto(frame, ("127.0.0.1", earth_recv_port))
+                        time.sleep(0.01)
+
+                continue
+
+            if msg_type == MSG_CMD_SINGLE:
+                command = parsed["payload"].decode("ascii", errors="replace")
+            elif msg_type == MSG_CMD_MULTI_START:
+                reassembly[seq] = {
+                    "total": parsed["total_pkt"],
+                    "chunks": {parsed["pkt_idx"]: parsed["payload"]},
+                }
+                continue
+            elif msg_type in (MSG_CMD_MULTI_CONT, MSG_CMD_MULTI_END):
+                if seq not in reassembly:
+                    continue
+                reassembly[seq]["chunks"][parsed["pkt_idx"]] = parsed["payload"]
+                if msg_type != MSG_CMD_MULTI_END:
+                    continue
+
+                total = reassembly[seq]["total"]
+                chunks = reassembly[seq]["chunks"]
+                if len(chunks) < total:
+                    continue
+                command = b"".join(chunks[i] for i in range(total)).decode("ascii", errors="replace")
+                del reassembly[seq]
+            else:
+                continue
+
+            response_text = execute_local_command(command)
+            response_packets = build_response_packets(response_text.encode("ascii"), seq)
+            downlink_cache[seq] = response_packets
+
+            # Intentionally send all later fragments first and skip fragment 0.
+            if len(response_packets) > 1:
+                sent_indices = list(range(1, len(response_packets)))
+            else:
+                sent_indices = [0]
+
+            log_line(f"initial_send seq={seq} sent_indices={sent_indices} total={len(response_packets)}")
+
+            for idx in sent_indices:
+                frame = build_ax25_downlink(response_packets[idx])
+                sock.sendto(frame, ("127.0.0.1", earth_recv_port))
+                time.sleep(0.01)
+
+            completed_downloads += 1
+
+        rc = 0 if completed_downloads >= 1 and nack_seen else 2
+        log_line(f"worker_end completed_downloads={completed_downloads} nack_seen={nack_seen} rc={rc}")
+        return rc
+    finally:
+        sock.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
+def test_download_recovery_when_start_fragment_arrives_late():
+    """
+    Verify EARTH can recover when VIOLET2 sends only later fragments first.
+    EARTH must detect that early fragments (including index 0) are missing,
+    send NACK, and complete the download after retransmission.
+    """
+    violet_recv_port = _free_udp_port()
+    earth_recv_port = _free_udp_port()
+    log_dir = Path(__file__).resolve().parent / LOG_DIR_NAME
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "udp_dual_terminal_download_late_start_fragment_test.log"
+
+    log_path.write_text("", encoding="utf-8")
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write("[TEST] start dual-terminal download with delayed first fragment\n")
+        handle.write(f"[TEST] earth_recv_port={earth_recv_port} violet_recv_port={violet_recv_port}\n")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result_path = Path(temp_dir) / "results.json"
+
+        env = os.environ.copy()
+        env.update(
+            {
+                "TEST_VIOLET_RECV_PORT": str(violet_recv_port),
+                "TEST_EARTH_RECV_PORT": str(earth_recv_port),
+                "TEST_RESULT_PATH": str(result_path),
+                "TEST_OUTPUT_LOG_PATH": str(log_path),
+            }
+        )
+
+        violet_proc = subprocess.Popen(
+            [sys.executable, "-c", VIOLET_WORKER_LATE_START_FRAGMENT],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=Path(__file__).resolve().parent.parent.parent,
+            text=True,
+        )
+
+        earth_proc = subprocess.Popen(
+            [sys.executable, "-c", EARTH_WORKER],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=Path(__file__).resolve().parent.parent.parent,
+            text=True,
+        )
+
+        violet_rc = violet_proc.wait(timeout=45)
+        earth_rc = earth_proc.wait(timeout=45)
+        results = json.loads(result_path.read_text(encoding="utf-8"))
+        log_text = log_path.read_text(encoding="utf-8")
+
+        assert violet_rc == 0, f"VIOLET2 worker exited with code {violet_rc}"
+        assert earth_rc == 0, f"EARTH worker exited with code {earth_rc}"
+        assert results["success"], f"Download failed or content mismatch: {results}"
+        assert results["content_matches"], "Received content does not match expected"
+        assert "received NACK" in log_text, "Expected EARTH to request missing fragment retransmission"
+        assert "missing_indices=[0" in log_text, "Expected NACK to include missing first fragment index 0"
