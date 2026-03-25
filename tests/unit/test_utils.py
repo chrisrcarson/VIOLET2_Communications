@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from earth_utils import (
     _violet2Checksum,
     _buildViolet2Header,

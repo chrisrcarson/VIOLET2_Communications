@@ -4,6 +4,8 @@
 # VIOLET2 complete successfully over AX.25, including transfers requiring multiple
 # overhead passes, and that Tx/Rx interruptions are handled properly.
 
+from __future__ import annotations
+
 import pathlib
 
 import pytest

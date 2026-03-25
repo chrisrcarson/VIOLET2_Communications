@@ -3,6 +3,8 @@
 # the start, middle, or end of a single packet or a multi-packet sequence) and that
 # retransmitting the original packet allows data to be recovered and reassembled.
 
+from __future__ import annotations
+
 import pytest
 from test_utils import (
     _buildViolet2Header,

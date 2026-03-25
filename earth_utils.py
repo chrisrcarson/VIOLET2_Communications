@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import socket
 import os
 from ax25_utils import validate_ax25_header

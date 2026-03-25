@@ -7,6 +7,8 @@ retransmission via NACK. The test validates that the full file is reconstructed
 despite packet loss.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import socket

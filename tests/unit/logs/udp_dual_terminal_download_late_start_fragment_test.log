@@ -1,7 +1,7 @@
 [TEST] start dual-terminal download with delayed first fragment
-[TEST] earth_recv_port=52643 violet_recv_port=52642
-[VIOLET-LATE] worker_start recv_port=52642 earth_recv_port=52643
-[EARTH] worker_start earth_recv_port=52643 violet_recv_port=52642
+[TEST] earth_recv_port=59859 violet_recv_port=59858
+[VIOLET-LATE] worker_start recv_port=59858 earth_recv_port=59859
+[EARTH] worker_start earth_recv_port=59859 violet_recv_port=59858
 [EARTH] send_download_command packets=1 command=download test_data/larger_file.txt
 [VIOLET-LATE] initial_send seq=21 sent_indices=[1] total=2
 [EARTH] receive_download_with_recovery seq=21 max_retries=10
