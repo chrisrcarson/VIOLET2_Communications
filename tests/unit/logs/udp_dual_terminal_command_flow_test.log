@@ -1,7 +1,7 @@
 [TEST] start dual-terminal udp command flow
-[TEST] earth_recv_port=62364 violet_recv_port=62363
-[VIOLET] worker_start recv_port=62363 earth_recv_port=62364 expected_transactions=3
-[EARTH] worker_start earth_recv_port=62364 violet_recv_port=62363 scenario_count=3
+[TEST] earth_recv_port=59475 violet_recv_port=59474
+[VIOLET] worker_start recv_port=59474 earth_recv_port=59475 expected_transactions=3
+[EARTH] worker_start earth_recv_port=59475 violet_recv_port=59474 scenario_count=3
 [EARTH] send_scenario name=ping seq=11 command=ping-token-123
 [VIOLET] received ping seq=11
 [VIOLET] sent pong seq=11 completed=1
@@ -9,14 +9,14 @@
 [EARTH] send_scenario name=ls seq=12 command=ls
 [VIOLET] execute_local_command command=ls
 [VIOLET] command ls completed
-[VIOLET] sending_response seq=12 fragments=2 response_bytes=359
-[EARTH] received_response name=ls fragmented_downlink=True bytes=359
+[VIOLET] sending_response seq=12 fragments=2 response_bytes=382
+[EARTH] received_response name=ls fragmented_downlink=True bytes=382
 [EARTH] send_scenario name=download seq=13 command=download test_data/test.txt
 [VIOLET] execute_local_command command=download test_data/test.txt
 [VIOLET] command download completed path=test_data/test.txt bytes=13
 [VIOLET] sending_response seq=13 fragments=1 response_bytes=13
 [EARTH] received_response name=download fragmented_downlink=False bytes=13
-[EARTH] results_written path=C:\Users\olivi\AppData\Local\Temp\tmp_3m0kjlh\results.json
+[EARTH] results_written path=C:\Users\olivi\AppData\Local\Temp\tmpckukgz8b\results.json
 [VIOLET] worker_end completed=3 rc=0
 [TEST] earth stdout begin
 
@@ -38,7 +38,7 @@
   {
     "name": "ls",
     "expected": "test_data",
-    "actual": ".DS_Store\n.git\n.github\n.pytest_cache\n.venv\nBPSK\nCAN\nDeviceTrees\nEARTH.py\nLimeSDR.py\nLime_Big.grc\nLime_Mini.grc\nREADME.md\nUSB_Test\nVIOLET2.py\nWORKING\n__pycache__\nax25_utils.py\ndoppler_sim.py\ndownloads_from_violet2\nearth_utils.py\nhierarchy-blocks\nold\npytest.ini\nrequirements.txt\ntest-live.log\ntest.txt\ntest_data\ntests\nudp_payload_test_sender.py\nviolet2_utils.py",
+    "actual": ".DS_Store\n.git\n.github\n.pytest_cache\n.venv\nBPSK\nCAN\nDeviceTrees\nEARTH.py\nLimeSDR.py\nLime_Big.grc\nLime_Mini_v5_headless.grc\nLime_Mini_v5_headless.py\nREADME.md\nUSB_Test\nVIOLET2.py\nWORKING\n__pycache__\nax25_utils.py\ndoppler_sim.py\ndownloads_from_violet2\nearth_utils.py\nhierarchy-blocks\nold\npytest.ini\nrequirements.txt\ntest.txt\ntest_data\ntests\nudp_payload_test_sender.py\nviolet2_utils.py",
     "fragmented_uplink": false,
     "fragmented_downlink": true
   },

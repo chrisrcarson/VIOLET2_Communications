@@ -82,14 +82,12 @@ Python and GNU Radio always communicate over **localhost** (`127.0.0.1`). The po
 | **Earth PC** | `earth_utils.py`: `UDP_PORT = 27001` | `earth_utils.py`: `RECEIVE_PORT = 27000` |
 | **Space PC** | `violet2_utils.py`: `UDP_PORT = 27000` | `violet2_utils.py`: `RECEIVE_PORT = 27001` |
 
-The Earth `Lime_Big.grc` flowgraph matches these ports exactly. The Space `Lime_Mini.grc` flowgraph currently only has the TX socket (port `52001` — needs updating to `27000`) and is missing an RX socket to deliver received packets back to `VIOLET2.py`.
-
 ## Running the Software
 
 ### Earth PC (ground station)
 
-1. Open and run `Lime_Big.grc` in GNU Radio Companion.
-2. In a separate terminal, run:
+1. Open and run `Lime_Mini_v5_headless.py` in a terminal.
+2. In a separate terminal with `earth_utils.py` and `ax25_utils.py`, run:
    ```bash
    python EARTH.py
    ```
@@ -108,8 +106,8 @@ Special local commands available at the prompt:
 
 ### Space PC / PocketBeagle 2 (OBC)
 
-1. Open and run `Lime_Mini.grc` in GNU Radio Companion.
-2. In a separate terminal, run:
+1. Open and run `Lime_Mini_headless.py` in a terminal.
+2. In a separate terminal with `violet2_utils.py` and `ax25_utils.py`, run:
    ```bash
    python VIOLET2.py
    ```
@@ -143,10 +141,14 @@ python -m pytest tests/unit/packet_payload_test.py::TestAtMaximumPayload -v
 # Run a single test by name
 python -m pytest tests/unit/packet_payload_test.py::TestAtMaximumPayload::test_payload_at_maximum_passes_validation -v
 
-# Run hardware tests (requires LimeSDR + GNU Radio running)
-python -m pytest tests/hardware/ -m hardware -v
+# Run all hardware tests (interactive – requires physical hardware setup)
+# -s flag is REQUIRED to see prompts and type y/n responses
+python -m pytest tests/hardware/ -v -s
 
-# Run everything except hardware tests
+# Run a single hardware verification
+python -m pytest tests/hardware/verification1_communication_protocol_compliance_test.py -v -s
+
+# Run unit tests only (no hardware required)
 python -m pytest tests/unit/ -v
 ```
 
@@ -179,19 +181,23 @@ The test simulates real command scenarios (ping, ls, download) with multi-packet
 - `test_data/test.txt` — Small reference file (13 bytes)
 - `test_data/ten_packets.txt` — 2480-byte file (exactly 10 × 248-byte VIOLET2 packets) used for multi-packet download testing
 
-### Hardware Tests (require LimeSDR + GNU Radio)
+### Hardware Tests (require physical hardware – LimeSDR + GNU Radio)
 
-Hardware tests live in `tests/hardware/` and talk to real UDP ports (`27000`/`27001`), meaning GNU Radio must be running and a LimeSDR must be connected on both PCs.
+Hardware tests live in `tests/hardware/` and require the full physical bench setup (Earth PC with LimeSDR, OBC_SDR PCB with PocketBeagle 2 and LimeSDR Mini, attenuators, and cabling). They are **interactive**: each test prints the exact terminal output to look for, then asks you to type `y` (pass) or `n` (fail).
+
+**The `-s` flag is required** so pytest does not swallow your keyboard input.
 
 ```bash
-# Run only hardware tests
-python -m pytest tests/hardware/ -m hardware -v
+# Run all hardware verifications (walks through SP1/SP2/SP3 setup first)
+python -m pytest tests/hardware/ -v -s
 
-# Run unit tests only, skipping hardware
-python -m pytest tests/unit/ -v
+# Run a single verification
+python -m pytest tests/hardware/verification1_communication_protocol_compliance_test.py -v -s
+python -m pytest tests/hardware/verification2_file_transfer_and_interruption_handling_test.py -v -s
+python -m pytest tests/hardware/verification5_payload_packet_size_test.py -v -s
 ```
 
-> Note: To write a hardware test, place it in `tests/hardware/`, import from `violet2_utils` or `earth_utils` directly, and decorate the class or file with `@pytest.mark.hardware`.
+**Setup flow:** `tests/hardware/conftest.py` contains a session-scoped fixture that runs once and walks you through SP1 (physical cabling), SP3 (OBC: `Lime_Mini_v5_headless.py` + `VIOLET2.py`), and SP2 (Earth: `LimeSDR.py` + `EARTH.py`, ping confirmed) before any test runs. If setup cannot be completed, all hardware tests are skipped cleanly.
 
 ## PocketBeagle 2 Setup and Dependencies:
 - Radio Conda
