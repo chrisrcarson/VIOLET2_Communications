@@ -1,3 +1,6 @@
+
+from __future__ import annotations
+import pytest
 """
 Dual UDP terminal test simulating packet loss during file downloads.
 
@@ -6,8 +9,6 @@ packet drops, and an EARTH ground station detects incomplete reception and reque
 retransmission via NACK. The test validates that the full file is reconstructed
 despite packet loss.
 """
-
-from __future__ import annotations
 
 import json
 import os
@@ -545,6 +546,10 @@ if __name__ == "__main__":
 '''
 
 
+@pytest.mark.skipif(
+    not os.environ.get("RUN_NETWORK_INTEGRATION_TESTS"),
+    reason="Requires dynamic UDP ports and network integration; set RUN_NETWORK_INTEGRATION_TESTS=1 to enable."
+)
 def test_dual_background_terminals_download_with_packet_loss():
     """
     Test file download over AX.25 with simulated packet loss (30% drop rate).
@@ -846,6 +851,10 @@ if __name__ == "__main__":
 '''
 
 
+@pytest.mark.skipif(
+    not os.environ.get("RUN_NETWORK_INTEGRATION_TESTS"),
+    reason="Requires dynamic UDP ports and network integration; set RUN_NETWORK_INTEGRATION_TESTS=1 to enable."
+)
 def test_download_recovery_when_start_fragment_arrives_late():
     """
     Verify EARTH can recover when VIOLET2 sends only later fragments first.

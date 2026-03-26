@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List, Dict, Optional, Union
 
 import socket
 import os
@@ -6,10 +7,10 @@ from ax25_utils import validate_ax25_header
 
 # UDP Configuration
 RECEIVE_HOST = "127.0.0.1"
-RECEIVE_PORT = int(os.environ.get("EARTH_RECEIVE_PORT", "27000"))
+RECEIVE_PORT = 27000
 
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = int(os.environ.get("EARTH_UDP_PORT", "27001"))
+UDP_PORT = 27001
 
 # AX.25 Layer 1
 AX25_HEADER_LEN     = 16
@@ -144,7 +145,7 @@ def _padApplicationData(data: bytes) -> bytes:
     ])
     return data + pattern # append the padding to the original data and return
 
-def _fragmentData(data: bytes) -> list[bytes]:
+def _fragmentData(data: bytes) -> List[bytes]:
     """
     Split data into chunks of at most VIOLET2_MAX_APP_DATA bytes.
     Returns: a list of byte strings, each containing at most VIOLET2_MAX_APP_DATA bytes.
@@ -211,7 +212,7 @@ def isAx25DownlinkPacket(rawData: bytes) -> bool:
         header_len=AX25_HEADER_LEN,
     )
 
-def violet2ProtocolBuilder(payload: bytes) -> list[bytes]:
+def violet2ProtocolBuilder(payload: bytes) -> List[bytes]:
     """
     Build VIOLET2 Layer 2 packets from the given application data payload, handling fragmentation based on the maximum allowed size.
     Returns: a list of byte strings, each representing a complete VIOLET2 packet.
@@ -259,7 +260,7 @@ def violet2ProtocolBuilder(payload: bytes) -> list[bytes]:
 
     return packets
 
-def ax25Send(payload: bytes, txSocket: socket.socket | None = None) -> bytes:
+def ax25Send(payload: bytes, txSocket: Optional[socket.socket] = None) -> bytes:
     """
     Build an AX.25 packet with the given payload and send it over UDP to the configured address and port for transmission.
     Returns: the complete AX.25 packet that was sent, as bytes.
@@ -301,7 +302,7 @@ def _ACK(sequenceNumber: int):
     )
     ax25Send(header + _padApplicationData(payload))
 
-def _NACK(sequenceNumber: int, missingIndices: list[int]):
+def _NACK(sequenceNumber: int, missingIndices: List[int]):
     """
     Send a NACK message for the given sequence number, including the list of missing packet indices.
         - sequenceNumber: the sequence number of the multi-packet message being NACKed
@@ -442,7 +443,7 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
             print(f"[EARTH PC]: Warning! Could not read partial file size: {e}")
             resumeOffset = 0
 
-    def appendPartialFromBuffer(buffer_map: dict[int, dict]):
+    def appendPartialFromBuffer(buffer_map: Dict[int, dict]):
         """
         Check the buffer map for any received fragments that can be appended to the .partial file, and append them in order if possible.
             - buffer_map: a dictionary mapping sequence numbers to dicts containing total packet count and received fragments for multi-packet responses.

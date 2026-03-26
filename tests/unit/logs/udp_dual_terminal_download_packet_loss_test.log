@@ -1,8 +1,8 @@
 [TEST] start dual-terminal download with packet loss
-[TEST] earth_recv_port=49343 violet_recv_port=49342
+[TEST] earth_recv_port=56330 violet_recv_port=56329
 [TEST] both workers started
-[EARTH] worker_start earth_recv_port=49343 violet_recv_port=49342
-[VIOLET] worker_start recv_port=49342 earth_recv_port=49343 packet_loss_rate=30%
+[VIOLET] worker_start recv_port=56329 earth_recv_port=56330 packet_loss_rate=30%
+[EARTH] worker_start earth_recv_port=56330 violet_recv_port=56329
 [EARTH] send_download_command packets=1 command=download test_data/larger_file.txt
 [VIOLET] execute_local_command command=download test_data/larger_file.txt
 [VIOLET] command download completed path=test_data/larger_file.txt bytes=400
@@ -10,7 +10,6 @@
 [EARTH] receive_download_with_recovery seq=21 max_retries=10
 [VIOLET] SIMULATED LOSS: dropping response fragment pkt_idx=1 seq=21
 [EARTH] receive_download_with_recovery total_packets=2
-[VIOLET] sent 1/2 fragments, packet_loss_applied
 [EARTH] receive_download_with_recovery received fragment pkt_idx=0 total_received=1/2
 [EARTH] receive_download_with_recovery incomplete (timeout): missing=[1] retry=1/10
 [EARTH] receive_download_with_recovery sent NACK for missing fragments
@@ -19,6 +18,7 @@
 [VIOLET] retransmitted 0 fragments for seq=21
 [EARTH] receive_download_with_recovery incomplete (timeout): missing=[1] retry=2/10
 [EARTH] receive_download_with_recovery sent NACK for missing fragments
+[VIOLET] received NACK seq=21 missing_indices=[1]
 [VIOLET] SIMULATED LOSS: retransmitted fragment idx=1 seq=21
 [VIOLET] retransmitted 0 fragments for seq=21
 [EARTH] receive_download_with_recovery incomplete (timeout): missing=[1] retry=3/10

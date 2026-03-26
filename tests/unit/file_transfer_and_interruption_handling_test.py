@@ -28,10 +28,6 @@ MAX_PAYLOAD_SIZE = 255  # max bytes per frame
 
 TESTDATA_DIR = pathlib.Path(__file__).parent.parent / "test_data"
 
-# upload a file from Earth PC to VIOLET2 OBC.
-def uploadData(filepath: str) -> bool:
-    raise NotImplementedError("uploadData() integration test - requires live VIOLET2 responder")
-
 # download a file from VIOLET2 OBC to Earth PC.
 def downloadFile(filename: str) -> bytes:
     raise NotImplementedError("downloadFile() integration test - requires live VIOLET2 responder")

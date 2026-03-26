@@ -7,10 +7,10 @@ from ax25_utils import validate_ax25_header
 
 # UDP Configuration
 RECEIVE_HOST = "127.0.0.1"
-RECEIVE_PORT = int(os.environ.get("VIOLET2_RECEIVE_PORT", "27001"))
+RECEIVE_PORT = 27000#27001
 
 UDP_HOST = "127.0.0.1" 
-UDP_PORT = int(os.environ.get("VIOLET2_UDP_PORT", "27000"))
+UDP_PORT = 27001#27000
 
 # AX.25 Layer 1
 AX25_HEADER_LEN     = 16
