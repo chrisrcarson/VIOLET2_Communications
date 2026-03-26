@@ -1,4 +1,6 @@
+
 from __future__ import annotations
+from typing import List
 
 import json
 import os
@@ -243,7 +245,7 @@ def build_ax25_uplink(payload: bytes) -> bytes:
     )
 
 
-def fragment_command_payload(payload: bytes, sequence_number: int) -> list[bytes]:
+def fragment_command_payload(payload: bytes, sequence_number: int) -> List[bytes]:
     if len(payload) <= VIOLET2_MAX_APP_DATA:
         header = _buildViolet2Header(
             messageType=MSG_CMD_SINGLE,
