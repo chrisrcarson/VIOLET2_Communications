@@ -46,13 +46,6 @@
 		>;
 	};
 
-	main_i2c2_pins: main-i2c2-pins {
-		pinctrl-single,pins = <
-			AM62X_IOPAD(0x00B4, PIN_INPUT_PULLUP, 1) /* P1.26 (K24) I2C2_SDA */
-			AM62X_IOPAD(0x00B0, PIN_INPUT_PULLUP, 1) /* P1.28 (K22) I2C2_SCL */
-		>;
-	};
-
 	main_i2c3_pins: main-i2c3-pins {
 		pinctrl-single,pins = <
 			AM62X_IOPAD(0x01D0, PIN_INPUT_PULLUP, 2) /* P2.09 (A15) I2C3_SCL */
@@ -90,27 +83,23 @@
 
 	main_prus_pins: main-prus-pins {
 		pinctrl-single,pins = <
-			AM62X_IOPAD(0x00FC, PIN_OUTPUT_PULLDOWN, 7) /* P1.29 - RCOUT 1*/
 			AM62X_IOPAD(0x00F0, PIN_OUTPUT_PULLDOWN, 5) /* P1.31 - RCOUT 2*/
 			AM62X_IOPAD(0x00E4, PIN_OUTPUT_PULLDOWN, 5) /* P1.33A - RCOUT 3*/
 			AM62X_IOPAD(0x00F4, PIN_OUTPUT_PULLDOWN, 5) /* P2.34 - RCOUT 4*/
 			AM62X_IOPAD(0x00E8, PIN_OUTPUT_PULLDOWN, 5) /* P2.32 - RCOUT 5*/
 			AM62X_IOPAD(0x00F8, PIN_OUTPUT_PULLDOWN, 5) /* P2.28 - RCOUT 6*/
-
 			AM62X_IOPAD(0x0104, PIN_INPUT_PULLUP, 8) /* P2.17 - RCINPUT*/
 		>;
 	};
 
 	main_led_pins: main-led-pins {
 		pinctrl-single,pins = <
-			AM62X_IOPAD(0x0174, PIN_OUTPUT_PULLDOWN, 7) /* P2.10 - LED C*/
-			AM62X_IOPAD(0x00B8, PIN_OUTPUT_PULLDOWN, 7) /* P2.02 - LED A*/
-			AM62X_IOPAD(0x00BC, PIN_OUTPUT_PULLDOWN, 7) /* P2.04 - LED B*/
-			AM62X_IOPAD(0x01A0, PIN_OUTPUT_PULLDOWN, 7) /* P1.02 - RELAY 1*/
-			AM62X_IOPAD(0x01A8, PIN_OUTPUT_PULLDOWN, 7) /* P1.04 - RELAY 2*/
-			AM62X_IOPAD(0x0180, PIN_OUTPUT_PULLDOWN, 7) /* P1.34 - RELAY 3*/
-			AM62X_IOPAD(0x013C, PIN_OUTPUT_PULLDOWN, 7) /* P1.12 - RELAY 4*/
-			AM62X_IOPAD(0x0160, PIN_OUTPUT_PULLDOWN, 7) /* P2.01 - BUZZER*/
+			AM62X_IOPAD(0x00FC, PIN_OUTPUT_PULLDOWN, 7) /* P1.29 - LimeSDR Power*/
+			AM62X_IOPAD(0x018C, PIN_OUTPUT_PULLDOWN, 7) /* P1.23 - Power to RF Board DC Module*/
+			AM62X_IOPAD(0x00B8, PIN_OUTPUT_PULLDOWN, 7) /* P2.02 - CAN Bus Transceiver*/
+			AM62X_IOPAD(0x00B0, PIN_OUTPUT_PULLDOWN, 7) /* P1.28 - RF Board Rx Mode*/
+			AM62X_IOPAD(0x0188, PIN_OUTPUT_PULLDOWN, 7) /* P1.25 - CAN Bus Transceiver*/
+			AM62X_IOPAD(0x00F4, PIN_OUTPUT_PULLDOWN, 7) /* P2.34 - Enable RF Board DC Module*/
 		>;
 	};
 };
@@ -150,9 +139,7 @@
 };
 
 &main_i2c2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&main_i2c2_pins>;
-	status = "okay";
+	status = "disabled";
 };
 
 &main_i2c3 {
