@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: TRXVU LimeSDR Ground Software
+# Title: LimeSDR Ground Software
 # GNU Radio version: 3.8.2.0
 
 from distutils.version import StrictVersion
@@ -46,12 +46,12 @@ import limesdr
 
 from gnuradio import qtgui
 
-class Lime_Big_V2(gr.top_block, Qt.QWidget):
+class LimeSDR(gr.top_block, Qt.QWidget):
 
     def __init__(self, baud_rate=1200, dl_freq=145.91e6, rx_gain=56, sps=160, tx_gain=56, ul_freq=436830000):
-        gr.top_block.__init__(self, "TRXVU LimeSDR Ground Software")
+        gr.top_block.__init__(self, "LimeSDR Ground Software")
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("TRXVU LimeSDR Ground Software")
+        self.setWindowTitle("LimeSDR Ground Software")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -69,7 +69,7 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "Lime_Big_V2")
+        self.settings = Qt.QSettings("GNU Radio", "LimeSDR")
 
         try:
             if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -105,6 +105,9 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
         self._tx_gain_ui_range = Range(0, 60, 1, tx_gain, 200)
         self._tx_gain_ui_win = RangeWidget(self._tx_gain_ui_range, self.set_tx_gain_ui, "Transmit Gain (dB)", "counter_slider", float)
         self.top_grid_layout.addWidget(self._tx_gain_ui_win)
+        self._squelch_ui_range = Range(-70, -30, 1, -50, 200)
+        self._squelch_ui_win = RangeWidget(self._squelch_ui_range, self.set_squelch_ui, "squelch", "counter_slider", float)
+        self.top_grid_layout.addWidget(self._squelch_ui_win)
         self._ul_freq_ui_tool_bar = Qt.QToolBar(self)
         self._ul_freq_ui_tool_bar.addWidget(Qt.QLabel('ul_freq_ui' + ": "))
         self._ul_freq_ui_line_edit = Qt.QLineEdit(str(self.ul_freq_ui))
@@ -112,9 +115,6 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
         self._ul_freq_ui_line_edit.returnPressed.connect(
             lambda: self.set_ul_freq_ui(eng_notation.str_to_num(str(self._ul_freq_ui_line_edit.text()))))
         self.top_grid_layout.addWidget(self._ul_freq_ui_tool_bar)
-        self._squelch_ui_range = Range(-70, -30, 1, -50, 200)
-        self._squelch_ui_win = RangeWidget(self._squelch_ui_range, self.set_squelch_ui, "squelch", "counter_slider", float)
-        self.top_grid_layout.addWidget(self._squelch_ui_win)
         self._rx_gain_ui_range = Range(0, 60, 1, rx_gain, 200)
         self._rx_gain_ui_win = RangeWidget(self._rx_gain_ui_range, self.set_rx_gain_ui, "Recieve Gain (dB)", "counter_slider", float)
         self.top_grid_layout.addWidget(self._rx_gain_ui_win)
@@ -469,7 +469,6 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
         self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(2)
         self.digital_descrambler_bb_0 = digital.descrambler_bb(0x21, 0, 16)
         self.digital_correlate_access_code_tag_xx_0 = digital.correlate_access_code_tag_bb('01111110', 0, '')
-        
         self.digital_chunks_to_symbols_xx_1 = digital.chunks_to_symbols_bf([-1.0, 1.0], 1)
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.blocks_tagged_stream_multiply_length_0 = blocks.tagged_stream_multiply_length(gr.sizeof_float*1, "packet_len", 160)
@@ -530,7 +529,7 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "Lime_Big_V2")
+        self.settings = Qt.QSettings("GNU Radio", "LimeSDR")
         self.settings.setValue("geometry", self.saveGeometry())
         event.accept()
 
@@ -585,6 +584,7 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
     def set_ul_freq(self, ul_freq):
         self.ul_freq = ul_freq
         self.set_ul_freq_ui(self.ul_freq)
+        self.limesdr_sink_0_0.set_center_freq(self.ul_freq, 0)
         self.qtgui_freq_sink_x_0_1.set_frequency_range(self.ul_freq, 10000)
         self.qtgui_waterfall_sink_x_0_1.set_frequency_range(self.ul_freq, 10000)
 
@@ -607,7 +607,7 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
 
     def set_squelch_ui(self, squelch_ui):
         self.squelch_ui = squelch_ui
-        self.analog_simple_squelch_cc_0.set_threshold(squelch_ui)
+        self.analog_simple_squelch_cc_0.set_threshold(self.squelch_ui)
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -615,6 +615,7 @@ class Lime_Big_V2(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.analog_frequency_modulator_fc_0.set_sensitivity(2.0*3.14159*35000.0/float(self.samp_rate))
+        self.analog_quadrature_demod_cf_0.set_gain(self.samp_rate/(2*math.pi*35000))
         self.limesdr_sink_0_0.set_digital_filter(self.samp_rate, 0)
         self.limesdr_sink_0_0.set_digital_filter(self.samp_rate, 1)
 
@@ -651,7 +652,7 @@ def argument_parser():
     return parser
 
 
-def main(top_block_cls=Lime_Big_V2, options=None):
+def main(top_block_cls=LimeSDR, options=None):
     if options is None:
         options = argument_parser().parse_args()
 

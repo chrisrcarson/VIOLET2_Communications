@@ -54,7 +54,7 @@ MSG_PONG            = 0xB1
 
 # Timeout and Retransmission Setup
 RECEIVE_TIMEOUT         = 15 # seconds
-PING_TIMEOUT            = 15 # seconds
+PING_TIMEOUT            = 10 # seconds
 
 DOWNLOAD_MAX_RETRIES    = 3 # max consecutive timeouts before aborting a download
 COMMAND_MAX_RETRIES     = 3 # number of command retransmissions after initial send
@@ -493,26 +493,28 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
     violet2Packets = violet2ProtocolBuilder(raw_data)
 
     # if the command was fragmented into multiple packets, print out how many packets will be sent to provide feedback to the user before transmission begins.
-    if len(violet2Packets) > 1: 
+    if len(violet2Packets) > 1:
         print(f"Fragmenting into {len(violet2Packets)} packets...\n")
-    
-    # Step 5: Transmit command as AX.25 packets
-    for info in violet2Packets: 
-        ax25Send(info)
 
-    # flush buffer
+    # flush stale packets BEFORE sending the command so we don't accidentally discard
+    # the response: in a fast local environment VIOLET2 can reply before the flush exits,
+    # causing early response packets to be thrown away.
     receiveSocket.setblocking(False)
     flushCount = 0
     try:
         while True:
-            receiveSocket.recvfrom(EARTH_RECEIVE_BUFFER_SIZE) 
+            receiveSocket.recvfrom(EARTH_RECEIVE_BUFFER_SIZE)
             flushCount += 1
-
-    except (BlockingIOError, socket.error): 
-        if flushCount > 0: 
+    except (BlockingIOError, socket.error):
+        if flushCount > 0:
             print(f"Flushed {flushCount} stale packets.")
-    
+
     receiveSocket.settimeout(RECEIVE_TIMEOUT) # set the receive timeout
+
+    # Step 5: Transmit command as AX.25 packets
+    print(f"[EARTH PC]: Downloading '{remotePath}'...")
+    for info in violet2Packets:
+        ax25Send(info)
 
     # Step 6: loop to receive packets, looking for download response
     downloadBuffer = {}     
@@ -720,21 +722,29 @@ def downloadFile(userInput: str, receiveSocket: socket.socket, requirePartial: b
                             )
                 
                 # if we have not received any packets for the current download, timeout, print warning and retransmit if attempts remain.
-                if retryCount < DOWNLOAD_MAX_RETRIES: 
-                    print(f"[EARTH PC]: Timeout (attempt {retryCount}/{DOWNLOAD_MAX_RETRIES}), waiting for more packets...")
-                
+                if retryCount < DOWNLOAD_MAX_RETRIES:
+                    if downloadBuffer:
+                        received = sum(len(buf["fragments"]) for buf in downloadBuffer.values())
+                        total = max((buf["total_pkt"] for buf in downloadBuffer.values()), default=0)
+                        print(f"[EARTH PC]: Timeout (attempt {retryCount}/{DOWNLOAD_MAX_RETRIES}), {received}/{total} fragments received — waiting for retransmissions via NACK...")
+                    else:
+                        print(f"[EARTH PC]: Timeout (attempt {retryCount}/{DOWNLOAD_MAX_RETRIES}), no packets received — command or downlink packets may have been lost")
+
                 else: # Timed out completely
-                    print(f"[EARTH PC]: Connection Timeout: No more data after {DOWNLOAD_MAX_RETRIES} attempts")
-                    
-                    # on complete timeout, check if we have any fragments in the buffer for the current download, print warning indicating download is incomplete 
-                    if downloadBuffer: 
+                    if downloadBuffer:
+                        received = sum(len(buf["fragments"]) for buf in downloadBuffer.values())
+                        total = max((buf["total_pkt"] for buf in downloadBuffer.values()), default=0)
+                        print(f"[EARTH PC]: Download failed after {DOWNLOAD_MAX_RETRIES} attempts — received {received}/{total} fragments (incomplete transfer)")
 
                         # loop through each seq_num in the buffer and print fragments received vs. total expected
                         for seq, buf in downloadBuffer.items():
-                            print(f"[EARTH PC] Incomplete transfer for seq={seq}: {len(buf['fragments'])}/{buf['total_pkt']} fragments")
-                        
+                            missing = [i for i in range(buf["total_pkt"]) if i not in buf["fragments"]]
+                            print(f"[EARTH PC]: seq={seq}: missing fragment(s): {[i+1 for i in missing]}")
+
                         # if fragments were received but the file is incomplete, attempt to add new fragments to .partial if possible to save progress.
                         appendPartialFromBuffer(downloadBuffer)
+                    else:
+                        print(f"[EARTH PC]: Download failed after {DOWNLOAD_MAX_RETRIES} attempts — no packets received (command or all downlink packets lost)")
 
     except KeyboardInterrupt:
         print("\n[EARTH PC]: Download interrupted by user (Ctrl+C).")

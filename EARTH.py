@@ -3,7 +3,7 @@ import time
 import subprocess
 import readline 
 from earth_utils import *
-from earth_utils import _buildViolet2Header, _padApplicationData, HELP_TEXT
+from earth_utils import _buildViolet2Header, _padApplicationData, _NACK, HELP_TEXT
 
 # receive socket setup
 receiveSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -162,23 +162,26 @@ while not isExiting:
         violet2Packets = violet2ProtocolBuilder(rawData) # rebuild the command into VIOLET2 packet(s)
 
         totalCommandAttempts = COMMAND_MAX_RETRIES + 1 # total attempts to send the command
-        responseComplete = False 
+        responseComplete = False
+        responseBuffer = {} # buffer persists across attempts so partial data isn't lost on NACK retries
 
         if len(violet2Packets) > 1: # if the command was fragmented, print number of expected packets
             print(f"Fragmenting into {len(violet2Packets)} packets...\n")
 
-        # attempt to send the command and receive a complete response. 
+        # attempt to send the command and receive a complete response.
         for attempt in range(1, totalCommandAttempts + 1):
 
             # set timeout for receive
             receiveSocket.settimeout(RECEIVE_TIMEOUT)
-            
-            # Step 3: Transmit each packet of the command using AX.25 (re-transmit also happens here)
-            for info in violet2Packets: 
-                ax25Send(info, txSocket=transmitSocket)
+
+            # Step 3: Transmit the command only when we have no buffered partial data.
+            # If we have partial data, we already sent NACKs and are waiting for retransmissions
+            # from VIOLET2's downlink cache (same seq_num) — no need to re-execute the command.
+            if not responseBuffer:
+                for info in violet2Packets:
+                    ax25Send(info, txSocket=transmitSocket)
 
             try:
-                responseBuffer = {} # buffer to store multi-packet fragment responses (key: sequenceNumber, value: dict with total_pkt and fragments)
 
                 while not responseComplete: # keep receiving until we get a complete response or timeout
 
@@ -220,7 +223,8 @@ while not isExiting:
                     elif messageType == RESP_MULTI_START: # first fragment, initiate buffer
                         responseBuffer[sequenceNum] = {
                             "total_pkt": totalPackets,
-                            "fragments": {packetIdx: parsed["payload"]}
+                            "fragments": {packetIdx: parsed["payload"]},
+                            "last_nack_missing": set(),
                         }
 
                     # Step 3.3: handle NACK from VIOLET2 for missing uplink command fragments
@@ -264,28 +268,56 @@ while not isExiting:
                                 del responseBuffer[sequenceNum] # delete packets in buffer at this seq_num
                                 responseComplete = True 
                             
-                            # received end but some fragments are missing
+                            # received end but some fragments are missing — NACK for the specific missing indices
+                            # so VIOLET2 retransmits from its downlink cache (same seq_num, not a re-execution)
                             else:
-                                print(f"[EARTH Terminal]: Warning! RESP_MULTI_END but only have {len(buf['fragments'])}/{buf['total_pkt']} fragments")
+                                missing = [i for i in range(buf["total_pkt"]) if i not in buf["fragments"]]
+                                missingSet = set(missing)
+                                if missingSet != buf.get("last_nack_missing", set()):
+                                    _NACK(sequenceNum, missing)
+                                    buf["last_nack_missing"] = missingSet
+                                    print(f"[EARTH Terminal]: NACK sent for seq={sequenceNum}, missing {len(missing)} fragment(s)")
 
-            #  Step 6: handle timeout at any point during reception, print a message and retransmit if attempts remain
+            #  Step 6: handle timeout at any point during reception
             except socket.timeout:
-                if attempt < totalCommandAttempts:
+                hasPartialData = any(buf.get("fragments") for buf in responseBuffer.values())
+
+                if hasPartialData:
+                    # We have partial data — NACK for all incomplete sequences so VIOLET2
+                    # retransmits the missing fragments from its cache (preserving the original seq_num).
+                    # Do NOT retransmit the command, which would cause VIOLET2 to re-execute it
+                    # and generate a new seq_num, making the buffered partial data useless.
+                    for seq, buf in responseBuffer.items():
+                        missing = [i for i in range(buf.get("total_pkt", 0)) if i not in buf.get("fragments", {})]
+                        if missing:
+                            missingSet = set(missing)
+                            if missingSet != buf.get("last_nack_missing", set()):
+                                _NACK(seq, missing)
+                                buf["last_nack_missing"] = missingSet
+                    if attempt < totalCommandAttempts:
+                        print(f"[EARTH Terminal]: Timeout with partial data ({attempt}/{totalCommandAttempts}), NACKing missing fragment(s)...")
+                        continue
+
+                elif attempt < totalCommandAttempts:
+                    # No partial data at all — retransmit the full command so VIOLET2 re-executes it
                     print(f"[EARTH Terminal]: No response packet before timeout ({attempt}/{totalCommandAttempts}). Retransmitting command...")
                     flushStalePackets(receiveSocket)
+                    responseBuffer = {} # clear buffer before fresh retransmit
                     continue
 
-                # Final attempt timeout warning
+                # Final attempt timeout
                 print(f"[EARTH Terminal]: No response packet received after {totalCommandAttempts} attempts")
 
             # Step 7: if complete response received, break out of loop
             if responseComplete:
                 break
             
-            # Step 8: if response incomplete, print a message and retransmit if attempts remain
+            # Step 8: inner loop exited without a complete response (e.g. parse error or unknown seq_num).
+            # Retransmit the command fresh since we can't recover the partial data.
             if attempt < totalCommandAttempts:
-                print(f"[EARTH Terminal]: Response received but incomplete (missing fragment(s)) ({attempt}/{totalCommandAttempts}). Retransmitting command...")
+                print(f"[EARTH Terminal]: Response received but incomplete ({attempt}/{totalCommandAttempts}). Retransmitting command...")
                 flushStalePackets(receiveSocket)
+                responseBuffer = {} # discard partial data and start fresh
 
     except KeyboardInterrupt:
         print("\nCancelled.")
