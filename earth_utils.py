@@ -53,7 +53,7 @@ MSG_PING            = 0xB0
 MSG_PONG            = 0xB1
 
 # Timeout and Retransmission Setup
-RECEIVE_TIMEOUT         = 5 # seconds
+RECEIVE_TIMEOUT         = 15 # seconds
 PING_TIMEOUT            = 15 # seconds
 
 DOWNLOAD_MAX_RETRIES    = 3 # max consecutive timeouts before aborting a download

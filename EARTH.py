@@ -61,11 +61,16 @@ def receiveValidatedDownlinkPacket(sock: socket.socket, timeoutSeconds: float):
 
 isExiting = False # flag to control main loop exit
 
-try: # main command loop
-    while not isExiting: 
+while not isExiting:
 
-        # Step 1: Get user input and handle local commands (help, clear, download, resume, ping) before sending to satellite.
+    # Step 1: Get user input and handle local commands (help, clear, download, resume, ping) before sending to satellite.
+    try:
         userInput = input("VIOLET2> ").strip()
+    except KeyboardInterrupt:
+        print("\nShutting down EARTH Terminal...")
+        break
+
+    try:
         
         if userInput.lower() == "quit": # quit command to exit the program
             isExiting = True
@@ -218,7 +223,21 @@ try: # main command loop
                             "fragments": {packetIdx: parsed["payload"]}
                         }
 
-                    # Step 3.3: handle middle or end of multi-packet response
+                    # Step 3.3: handle NACK from VIOLET2 for missing uplink command fragments
+                    elif messageType == MSG_NACK:
+                        nackPayload = parsed["payload"]
+                        if len(nackPayload) < 1:
+                            print("[EARTH Terminal]: NACK received from VIOLET2 but payload too short to parse")
+                            continue
+                        nackSeq = nackPayload[0]
+                        missingIndices = list(nackPayload[1:])
+                        print(f"[EARTH Terminal]: NACK received from VIOLET2 — seq={nackSeq}, missing fragment(s): {[i+1 for i in missingIndices]}")
+                        for idx in missingIndices:
+                            if 0 <= idx < len(violet2Packets):
+                                print(f"[EARTH Terminal]: Retransmitting command fragment {idx+1}/{len(violet2Packets)}...")
+                                ax25Send(violet2Packets[idx], txSocket=transmitSocket)
+
+                    # Step 3.4: handle middle or end of multi-packet response
                     elif messageType in (RESP_MULTI_CONT, RESP_MULTI_END): # middle or final fragment
 
                         # if a multi-packet response fragment is received but no start fragment was stored in the buffer
@@ -268,11 +287,12 @@ try: # main command loop
                 print(f"[EARTH Terminal]: Response received but incomplete (missing fragment(s)) ({attempt}/{totalCommandAttempts}). Retransmitting command...")
                 flushStalePackets(receiveSocket)
 
-except KeyboardInterrupt:
-    print("\nShutting down EARTH Terminal...")
-    pass  # Ctrl+C at the input() prompt
+    except KeyboardInterrupt:
+        print("\nCancelled.")
+        flushStalePackets(receiveSocket)
+        continue
 
-finally: # final cleanup on exit, save command history and close socket
-    saveCommandHistory(historyFile)
-    receiveSocket.close()
-    print("\nCleaned up connections and saved history.")
+# final cleanup on exit, save command history and close socket
+saveCommandHistory(historyFile)
+receiveSocket.close()
+print("\nCleaned up connections and saved history.")
