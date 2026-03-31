@@ -283,11 +283,12 @@ def main(top_block_cls=Lime_Mini_v5_headless, options=None):
     tb.start()
 
     try:
-        input('Press Enter to quit: ')
-    except EOFError:
+        tb.wait()
+    except KeyboardInterrupt:
         pass
-    tb.stop()
-    tb.wait()
+    finally:
+        tb.stop()
+        tb.wait()
 
 
 if __name__ == '__main__':

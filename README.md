@@ -199,49 +199,27 @@ python -m pytest tests/hardware/verification5_payload_packet_size_test.py -v -s
 
 **Setup flow:** `tests/hardware/conftest.py` contains a session-scoped fixture that runs once and walks you through SP1 (physical cabling), SP3 (OBC: `Lime_Mini_v5_headless.py` + `VIOLET2.py`), and SP2 (Earth: `LimeSDR.py` + `EARTH.py`, ping confirmed) before any test runs. If setup cannot be completed, all hardware tests are skipped cleanly.
 
-## PocketBeagle 2 Setup and Dependencies:
-- Radio Conda
-- Space PC hier blocks
-- BeagleBoard-DeviceTrees https://github.com/beagleboard/BeagleBoard-DeviceTrees
-- CAN-Utils https://github.com/linux-can/can-utils
-- Implement ArduPilot Device Tree Overlays for CAN interface (use this guide to implement overlays only) https://github.com/juvinski/ardupilot_wiki/blob/pocket2/common/source/docs/common-pocketbeagle-2.rst
-- Enabled service to setup CAN that runs:
+## Compiling Device Tree Overlays
 
-``
-sudo ip link set can0 type can bitrate 500000
-``
+- Custom device tree overlays were required to control necessary GPIO pins. The PocketBeagle 2 Ardupilot dtso file was modified to give access to required pins.
 
-``
-sudo ifconfig can0 up
-``
+- Command to compile `DeviceTrees/k3-am62-pocketbeagle2-violet2.dtso` dtso into dtbo on MacOS using https://github.com/beagleboard/BeagleBoard-DeviceTrees:
+```
 
-- CAN Interface Up:
+gcc -E -nostdinc -undef -x assembler-with-cpp \
+    -I BeagleBoard-DeviceTrees/include/ \
+    -I BeagleBoard-DeviceTrees/src/arm64/ \
+    k3-am62-pocketbeagle2-violet2.dtso | \
+    dtc -O dtb -o k3-am62-pocketbeagle2-violet2.dtbo -
 
-``
-sudo canup.sh
-``
+```
 
-- CAN Interface Down:
+## Startup Script
 
-``
-sudo candown.sh
-``
-
-
-- CAN Receive:
-
-``
-candump -cae can0,0:0,#FFFFFFFF
-``
-
-- CAN Send:
-
-``
-cansend can0 123#DEADBEEF
-``
-
-- LimeSDR Mini Tx sweep test:
-
-``
-LimeUtil --cal --start 145915000 --stop 145915000
-``
+- `Startup/startup.sh` initiation sequence:
+   1. Power on LimeSDR Mini
+   2. Power to RF DC Module
+   3. Set RF Switch to Rx mode
+   4. Power on RF Switch
+   5. Enable RF DC Module 
+   6. Enable CAN transceiver and set CAN interface
