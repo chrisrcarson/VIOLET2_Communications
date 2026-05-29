@@ -82,11 +82,12 @@ Python and GNU Radio always communicate over **localhost** (`127.0.0.1`). The po
 | **Earth PC** | `earth_utils.py`: `UDP_PORT = 27001` | `earth_utils.py`: `RECEIVE_PORT = 27000` |
 | **Space PC** | `violet2_utils.py`: `UDP_PORT = 27000` | `violet2_utils.py`: `RECEIVE_PORT = 27001` |
 
+NOTE (Olivia): It was found in testing this that the Space PC script must operate on TX port 27001 and RX port 27000.
 ## Running the Software
 
 ### Earth PC (ground station)
 
-1. Open and run `Lime_Mini_v5_headless.py` in a terminal.
+1. Open and run `LimeSDR.py` in a terminal.
 2. In a separate terminal with `earth_utils.py` and `ax25_utils.py`, run:
    ```bash
    python EARTH.py
